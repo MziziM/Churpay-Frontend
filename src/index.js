@@ -7,12 +7,9 @@ import { NotificationProvider } from "./components/NotificationContext";
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
-root.render(
   <NotificationProvider>
-    <App />
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
   </NotificationProvider>
 );

@@ -1,194 +1,98 @@
+// src/components/AdminDashboard.js
+
 import React, { useState } from "react";
-import jsPDF from "jspdf";
+import AdminHome from "./AdminHome";
+import AdminChurchManagement from "./AdminChurchManagement";
+import AdminAnalytics from "./AdminAnalytics";
+import BulkMessage from "./BulkMessage";
+
+const TABS = [
+  { name: "Dashboard", comp: AdminHome },
+  { name: "Church Management", comp: AdminChurchManagement },
+  { name: "Analytics", comp: AdminAnalytics },
+  { name: "Bulk Messages", comp: BulkMessage }
+];
 
 export default function AdminDashboard() {
-  // Dummy data
-  const [churches] = useState([
-    { id: 1, name: "GCC Faith Center", city: "Johannesburg", status: "Active", joined: "2024-06-15" },
-    { id: 2, name: "Bethel Life", city: "Durban", status: "Active", joined: "2024-05-29" },
-    { id: 3, name: "Life Changers", city: "Cape Town", status: "Pending", joined: "2024-07-02" },
-  ]);
-  const [projects] = useState([
-    { id: 1, title: "Roof Repair", church: "GCC Faith Center", goal: 10000, raised: 5500, status: "Active" },
-    { id: 2, title: "School Shoes Drive", church: "GCC Faith Center", goal: 7000, raised: 3600, status: "Active" },
-    { id: 3, title: "Soup Kitchen", church: "Life Changers", goal: 5000, raised: 1900, status: "Pending" },
-  ]);
-  const [users] = useState([
-    { id: 1, name: "Mzizi Mzwakhe", email: "mzizi@email.com", church: "GCC Faith Center", joined: "2024-06-10" },
-    { id: 2, name: "Lebo", email: "lebo@email.com", church: "Bethel Life", joined: "2024-06-22" },
-    // More dummy users...
-  ]);
+  const [tab, setTab] = useState(0);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Totals
-  const totalChurches = churches.length;
-  const totalUsers = users.length;
-  const totalProjects = projects.length;
-  const totalRaised = projects.reduce((sum, p) => sum + p.raised, 0);
-
-  // Download CSV (platform summary)
-  function downloadCSV() {
-    const headers = ["Church", "Project", "Goal", "Raised", "Status"];
-    const rows = projects.map(p =>
-      [p.church, p.title, p.goal, p.raised, p.status].join(",")
-    );
-    const csvContent = [headers.join(","), ...rows].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "churpay_platform_data.csv";
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  // Download PDF (platform summary)
-  function downloadPDF() {
-    const doc = new jsPDF();
-    doc.setFontSize(18);
-    doc.setTextColor("#7c3aed");
-    doc.text("ChurPay Platform Analytics", 20, 20);
-    doc.setFontSize(12);
-    doc.setTextColor("#333");
-    let y = 35;
-    doc.text("Church", 20, y);
-    doc.text("Project", 60, y);
-    doc.text("Goal", 110, y);
-    doc.text("Raised", 140, y);
-    doc.text("Status", 170, y);
-    y += 7;
-    doc.setLineWidth(0.5);
-    doc.line(20, y, 200, y);
-    projects.forEach(p => {
-      y += 8;
-      doc.text(p.church, 20, y);
-      doc.text(p.title, 60, y);
-      doc.text("R" + p.goal, 110, y);
-      doc.text("R" + p.raised, 140, y);
-      doc.text(p.status, 170, y);
-      if (y > 270) {
-        doc.addPage();
-        y = 20;
-      }
-    });
-    doc.save(`churpay_platform_analytics.pdf`);
-  }
+  const ActiveComponent = TABS[tab].comp;
 
   return (
-    <section className="max-w-5xl mx-auto mt-6 md:mt-12 p-2 md:p-8 bg-white rounded-2xl shadow-xl">
-      <h2 className="text-2xl md:text-3xl font-bold text-purple-800 mb-6">Admin Dashboard</h2>
+    <div className="flex min-h-screen bg-gray-50">
+      {/* Sidebar (desktop) */}
+      <aside className="hidden md:flex flex-col w-60 bg-purple-800 p-6 text-white fixed left-0 top-0 h-full z-30 shadow-xl">
+        <div className="text-2xl font-bold text-yellow-300 mb-8">Admin Panel</div>
+        {TABS.map((t, i) => (
+          <button
+            key={t.name}
+            onClick={() => setTab(i)}
+            className={`block text-left px-5 py-3 mb-2 rounded-xl font-semibold text-lg transition ${
+              tab === i
+                ? "bg-yellow-300 text-purple-800 shadow"
+                : "hover:bg-purple-700 hover:text-yellow-300"
+            }`}
+          >
+            {t.name}
+          </button>
+        ))}
+      </aside>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-purple-100 p-6 rounded-xl text-center">
-          <p className="text-2xl font-bold text-purple-800">{totalChurches}</p>
-          <p className="text-gray-700 mt-2">Churches</p>
-        </div>
-        <div className="bg-purple-100 p-6 rounded-xl text-center">
-          <p className="text-2xl font-bold text-purple-800">{totalUsers}</p>
-          <p className="text-gray-700 mt-2">Users</p>
-        </div>
-        <div className="bg-purple-100 p-6 rounded-xl text-center">
-          <p className="text-2xl font-bold text-purple-800">{totalProjects}</p>
-          <p className="text-gray-700 mt-2">Projects</p>
-        </div>
-        <div className="bg-purple-100 p-6 rounded-xl text-center">
-          <p className="text-2xl font-bold text-purple-800">R{totalRaised.toLocaleString()}</p>
-          <p className="text-gray-700 mt-2">Total Raised</p>
-        </div>
-      </div>
+      {/* Hamburger menu for mobile */}
+      <button
+        className="md:hidden fixed top-4 left-4 z-40 bg-purple-700 p-2 rounded-xl shadow-lg focus:outline-none"
+        onClick={() => setSidebarOpen(true)}
+        aria-label="Open admin menu"
+      >
+        <svg width="28" height="28" fill="none" viewBox="0 0 24 24">
+          <rect x="4" y="6" width="16" height="2" fill="#FFF"/>
+          <rect x="4" y="11" width="16" height="2" fill="#FFF"/>
+          <rect x="4" y="16" width="16" height="2" fill="#FFF"/>
+        </svg>
+      </button>
 
-      {/* Quick Actions */}
-      <div className="flex flex-col md:flex-row gap-4 mb-8">
-        <button
-          className="bg-purple-700 text-yellow-300 font-bold px-5 py-2 rounded-xl shadow hover:bg-purple-800 transition w-full md:w-auto"
-          onClick={downloadCSV}
-        >
-          Download CSV
-        </button>
-        <button
-          className="bg-purple-50 text-purple-700 font-bold px-5 py-2 rounded-xl shadow border border-purple-200 hover:bg-purple-100 transition w-full md:w-auto"
-          onClick={downloadPDF}
-        >
-          Download PDF
-        </button>
-      </div>
-
-      {/* Churches Table */}
-      <h3 className="text-xl font-semibold text-purple-700 mb-4 mt-8">Churches</h3>
-      <div className="overflow-x-auto mb-10">
-        <table className="min-w-full bg-white border rounded-xl">
-          <thead>
-            <tr>
-              <th className="py-2 px-4 border-b text-left">Name</th>
-              <th className="py-2 px-4 border-b text-left">City</th>
-              <th className="py-2 px-4 border-b text-left">Status</th>
-              <th className="py-2 px-4 border-b text-left">Joined</th>
-            </tr>
-          </thead>
-          <tbody>
-            {churches.map((c, i) => (
-              <tr key={i}>
-                <td className="py-2 px-4 border-b">{c.name}</td>
-                <td className="py-2 px-4 border-b">{c.city}</td>
-                <td className="py-2 px-4 border-b">{c.status}</td>
-                <td className="py-2 px-4 border-b">{c.joined}</td>
-              </tr>
+      {/* Sidebar Drawer (mobile) */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 bg-black/30 z-50" onClick={() => setSidebarOpen(false)}>
+          <aside
+            className="absolute left-0 top-0 w-64 h-full bg-purple-800 p-6 shadow-2xl animate-slide-in flex flex-col text-white"
+            style={{animationFillMode: 'forwards'}}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="text-2xl font-bold text-yellow-300 mb-8">Admin Panel</div>
+            {TABS.map((t, i) => (
+              <button
+                key={t.name}
+                onClick={() => { setTab(i); setSidebarOpen(false); }}
+                className={`block text-left px-5 py-3 mb-2 rounded-xl font-semibold text-lg transition ${
+                  tab === i
+                    ? "bg-yellow-300 text-purple-800 shadow"
+                    : "hover:bg-purple-700 hover:text-yellow-300"
+                }`}
+              >
+                {t.name}
+              </button>
             ))}
-          </tbody>
-        </table>
-      </div>
+            <button className="mt-auto text-sm text-yellow-200 hover:underline pt-6" onClick={() => setSidebarOpen(false)}>Close</button>
+          </aside>
+        </div>
+      )}
 
-      {/* Projects Table */}
-      <h3 className="text-xl font-semibold text-purple-700 mb-4">Projects</h3>
-      <div className="overflow-x-auto mb-10">
-        <table className="min-w-full bg-white border rounded-xl">
-          <thead>
-            <tr>
-              <th className="py-2 px-4 border-b text-left">Title</th>
-              <th className="py-2 px-4 border-b text-left">Church</th>
-              <th className="py-2 px-4 border-b text-left">Goal</th>
-              <th className="py-2 px-4 border-b text-left">Raised</th>
-              <th className="py-2 px-4 border-b text-left">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {projects.map((p, i) => (
-              <tr key={i}>
-                <td className="py-2 px-4 border-b">{p.title}</td>
-                <td className="py-2 px-4 border-b">{p.church}</td>
-                <td className="py-2 px-4 border-b">R{p.goal.toLocaleString()}</td>
-                <td className="py-2 px-4 border-b text-purple-800 font-bold">R{p.raised.toLocaleString()}</td>
-                <td className="py-2 px-4 border-b">{p.status}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {/* Main Content Area */}
+      <main className="flex-1 ml-0 md:ml-60 p-4 md:p-10 transition-all w-full">
+        <div className="max-w-5xl mx-auto">
+          <div className="bg-white rounded-2xl shadow-xl p-6 md:p-10">
+            <ActiveComponent />
+          </div>
+        </div>
+      </main>
 
-      {/* Users Table */}
-      <h3 className="text-xl font-semibold text-purple-700 mb-4">Users</h3>
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-white border rounded-xl">
-          <thead>
-            <tr>
-              <th className="py-2 px-4 border-b text-left">Name</th>
-              <th className="py-2 px-4 border-b text-left">Email</th>
-              <th className="py-2 px-4 border-b text-left">Church</th>
-              <th className="py-2 px-4 border-b text-left">Joined</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((u, i) => (
-              <tr key={i}>
-                <td className="py-2 px-4 border-b">{u.name}</td>
-                <td className="py-2 px-4 border-b">{u.email}</td>
-                <td className="py-2 px-4 border-b">{u.church}</td>
-                <td className="py-2 px-4 border-b">{u.joined}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </section>
+      {/* Animations */}
+      <style>{`
+      @keyframes slide-in { 0% { transform: translateX(-100%); opacity:0; } 100% { transform: translateX(0); opacity:1; } }
+      .animate-slide-in { animation: slide-in 0.23s cubic-bezier(.77,.21,.68,1.15) forwards; }
+      `}</style>
+    </div>
   );
 }

@@ -1,0 +1,166 @@
+import { useEffect, useState } from "react";
+import axios from "axios";
+
+function exportCSV(rows, headers, filename) {
+  const csvRows = [
+    headers.join(","),
+    ...rows.map(r => headers.map(h => `"${(r[h] ?? "").toString().replace(/"/g, '""')}"`).join(","))
+  ];
+  const blob = new Blob([csvRows.join("\n")], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export default function AllUsers() {
+  const [churches, setChurches] = useState([]);
+  const [members, setMembers] = useState([]);
+  const [msg, setMsg] = useState("");
+  const [tab, setTab] = useState("churches");
+  const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    const token = localStorage.getItem("churpay_token");
+    if (!token) return setMsg("Please log in as admin.");
+    // Churches
+    axios.post("http://localhost:5000/api/admin/churches", { token })
+      .then(res => setChurches(res.data))
+      .catch(() => setMsg("Error loading churches."));
+    // Members (use your backend route here or dummy data for now)
+    axios.post("http://localhost:5000/api/admin/members", { token })
+      .then(res => setMembers(res.data))
+      .catch(() => setMembers([
+        // Dummy member data (replace/remove when backend ready)
+        { name: "Mpho Dlamini", email: "mpho@churpay.com", id: "mem1" },
+        { name: "Zanele Nkosi", email: "zanele@churpay.com", id: "mem2" },
+      ]));
+  }, []);
+
+  const filteredChurches = churches.filter(
+    c =>
+      c.church_name?.toLowerCase().includes(search.toLowerCase()) ||
+      c.email?.toLowerCase().includes(search.toLowerCase())
+  );
+  const filteredMembers = members.filter(
+    m =>
+      m.name?.toLowerCase().includes(search.toLowerCase()) ||
+      m.email?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <section className="max-w-5xl mx-auto mt-10 p-8 bg-white rounded-2xl shadow-xl">
+      <h2 className="text-3xl font-bold text-purple-900 mb-6">All Users</h2>
+      {msg && <div className="mb-6 text-red-600 font-semibold text-center">{msg}</div>}
+
+      <div className="flex gap-4 mb-6">
+        <button
+          onClick={() => setTab("churches")}
+          className={`px-6 py-2 rounded-xl font-bold ${tab === "churches" ? "bg-purple-700 text-yellow-300" : "bg-gray-200 text-purple-800"}`}
+        >
+          Churches
+        </button>
+        <button
+          onClick={() => setTab("members")}
+          className={`px-6 py-2 rounded-xl font-bold ${tab === "members" ? "bg-purple-700 text-yellow-300" : "bg-gray-200 text-purple-800"}`}
+        >
+          Members
+        </button>
+        <input
+          type="text"
+          placeholder={`Search ${tab}...`}
+          className="border border-yellow-400 rounded-lg p-2 ml-6 w-72"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+        {(tab === "churches" ? filteredChurches.length : filteredMembers.length) > 0 && (
+          <button
+            onClick={() =>
+              exportCSV(
+                tab === "churches" ? filteredChurches : filteredMembers,
+                tab === "churches"
+                  ? ["church_name", "email", "id"]
+                  : ["name", "email", "id"],
+                `churpay_${tab}.csv`
+              )
+            }
+            className="ml-4 bg-purple-700 text-yellow-300 font-bold px-5 py-2 rounded-xl shadow hover:bg-purple-800 transition"
+          >
+            Export CSV
+          </button>
+        )}
+      </div>
+
+      {/* TABLES */}
+      {tab === "churches" && (
+        <div className="overflow-x-auto rounded-xl shadow-md">
+          <table className="min-w-full bg-white border border-purple-200 rounded-xl">
+            <thead className="bg-purple-700 text-white">
+              <tr>
+                <th className="py-3 px-6 text-left font-semibold">Church Name</th>
+                <th className="py-3 px-6 text-left font-semibold">Email</th>
+                <th className="py-3 px-6 text-left font-semibold">ID</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredChurches.map((c, i) => (
+                <tr
+                  key={i}
+                  className="border-b border-purple-100 hover:bg-yellow-50 transition-colors duration-200"
+                >
+                  <td className="py-3 px-6">{c.church_name}</td>
+                  <td className="py-3 px-6">{c.email}</td>
+                  <td className="py-3 px-6">{c.id}</td>
+                </tr>
+              ))}
+              {filteredChurches.length === 0 && (
+                <tr>
+                  <td colSpan={3} className="text-center py-6 text-purple-600 font-semibold">
+                    No churches found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {tab === "members" && (
+        <div className="overflow-x-auto rounded-xl shadow-md">
+          <table className="min-w-full bg-white border border-purple-200 rounded-xl">
+            <thead className="bg-purple-700 text-white">
+              <tr>
+                <th className="py-3 px-6 text-left font-semibold">Name</th>
+                <th className="py-3 px-6 text-left font-semibold">Email</th>
+                <th className="py-3 px-6 text-left font-semibold">ID</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredMembers.map((m, i) => (
+                <tr
+                  key={i}
+                  className="border-b border-purple-100 hover:bg-yellow-50 transition-colors duration-200"
+                >
+                  <td className="py-3 px-6">{m.name}</td>
+                  <td className="py-3 px-6">{m.email}</td>
+                  <td className="py-3 px-6">{m.id}</td>
+                </tr>
+              ))}
+              {filteredMembers.length === 0 && (
+                <tr>
+                  <td colSpan={3} className="text-center py-6 text-purple-600 font-semibold">
+                    No members found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+}
+export default function AllUsers() {
+  // ... component code ...
+}

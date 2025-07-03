@@ -4,7 +4,10 @@ import { Bar } from "react-chartjs-2";
 import { Chart, BarElement, CategoryScale, LinearScale } from "chart.js";
 Chart.register(BarElement, CategoryScale, LinearScale);
 import axios from "axios";
-
+import PayoutRequestForm from "./PayoutRequestForm";
+import MyPayouts from "./MyPayouts";
+// Replace this with your actual logic for fetching the user's token:
+const userToken = window.localStorage.getItem("jwt_token");
 export default function ChurchDashboard() {
   // Replace with real church login logic later
   const CHURCH_NAME = "GCC Faith Center";
@@ -155,6 +158,12 @@ export default function ChurchDashboard() {
           <div className="text-2xl font-bold mb-1">{stats.totalProjects}</div>
           <div className="text-lg">Projects</div>
         </div>
+      </div>
+
+      {/* Church Payout Requests */}
+      <div className="my-10">
+        <PayoutRequestForm token={userToken} />
+        <MyPayouts token={userToken} />
       </div>
 
       {/* Chart */}

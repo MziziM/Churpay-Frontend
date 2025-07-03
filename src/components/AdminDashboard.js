@@ -5,6 +5,7 @@ import AdminHome from "./AdminHome";
 import AdminChurchManagement from "./AdminChurchManagement";
 import AdminAnalytics from "./AdminAnalytics";
 import BulkMessage from "./BulkMessage";
+import AdminPayouts from "./AdminPayouts";
 
 const TABS = [
   { name: "Dashboard", comp: AdminHome },
@@ -84,6 +85,10 @@ export default function AdminDashboard() {
         <div className="max-w-5xl mx-auto">
           <div className="bg-white rounded-2xl shadow-xl p-6 md:p-10">
             <ActiveComponent />
+          </div>
+          {/* Payout Management for Admin */}
+          <div className="mt-10">
+            <AdminPayouts token={window.localStorage.getItem("jwt_token")} />
           </div>
         </div>
       </main>

@@ -22,13 +22,33 @@ export default function Signup() {
     setLoading(true);
     setMsg("");
     try {
-      const endpoint =
-        role === "church"
-          ? "https://churpay-backend.onrender.com/api/register-church"
-          : role === "member"
-          ? "https://churpay-backend.onrender.com/api/register-member"
-          : "https://churpay-backend.onrender.com/api/register-admin";
-      await axios.post(endpoint, { ...form, role });
+      let data;
+      let endpoint;
+      if (role === "church") {
+        endpoint = "https://churpay-backend.onrender.com/api/register";
+        data = {
+          church_name: form.church_name,
+          email: form.email,
+          password: form.password,
+          lead_pastor: form.lead_pastor,
+          contact_person: form.contact_person,
+          role,
+        };
+      } else if (role === "member") {
+        endpoint = "https://churpay-backend.onrender.com/api/register-member";
+        data = {
+          church_name: form.name, // use church_name key, value from name input
+          email: form.email,
+          password: form.password,
+          role,
+        };
+      } else {
+        setMsg("Admin accounts are invite-only. Please contact the platform owner.");
+        setLoading(false);
+        return;
+      }
+
+      await axios.post(endpoint, data);
       setMsg("Signup successful! You can now log in.");
     } catch (err) {
       setMsg("Registration failed: " + (err.response?.data?.msg || "Check your details and try again."));
@@ -58,7 +78,7 @@ export default function Signup() {
 
         {role && (
           <form onSubmit={handleSubmit} className="space-y-5">
-            {role === "member" && (
+            {(role === "member") && (
               <>
                 <input
                   type="text"

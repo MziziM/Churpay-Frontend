@@ -35,9 +35,9 @@ export default function Signup() {
           role,
         };
       } else if (role === "member") {
-        endpoint = "https://churpay-backend.onrender.com/api/register-member";
+        endpoint = "https://churpay-backend.onrender.com/api/register";
         data = {
-          church_name: form.name, // use church_name key, value from name input
+          name: form.name,
           email: form.email,
           password: form.password,
           role,

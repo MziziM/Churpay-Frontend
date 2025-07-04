@@ -1,0 +1,1 @@
+// This file is intentionally left blank. The backend code has been moved to churpay-backend/index.js.

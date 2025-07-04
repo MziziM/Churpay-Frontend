@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { FaChurch, FaHandsHelping, FaChild, FaUtensils, FaUserCircle, FaMedal, FaArrowUp } from "react-icons/fa";
 import { MdStar, MdRepeat, MdTrendingUp } from "react-icons/md";
+import jsPDF from "jspdf";
 
 const BADGE_LIST = [
   { key: "firstGift", label: "First Gift", icon: <MdStar className="inline mb-1 text-yellow-400" /> },
@@ -31,6 +32,19 @@ export default function MemberDashboard() {
   const [editingGoal, setEditingGoal] = useState(false);
   const [newGoal, setNewGoal] = useState(stats.goal);
 
+  const [atTop, setAtTop] = useState(true);
+  const [givingType, setGivingType] = useState("Tithe");
+  const [showGiveOptions, setShowGiveOptions] = useState(false);
+  const [giveAmount, setGiveAmount] = useState(100);
+
+  useEffect(() => {
+    function handleScroll() {
+      setAtTop(window.scrollY < 50);
+    }
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   useEffect(() => {
     const token = localStorage.getItem("churpay_token");
     axios
@@ -44,6 +58,7 @@ export default function MemberDashboard() {
           badges: res.data.stats.badges || {},
           monthlyTrend: res.data.stats.monthlyTrend || [],
           memberName: res.data.stats.memberName || "Your Name",
+          memberAccountNumber: res.data.stats.memberAccountNumber || (Math.floor(1000000 + Math.random() * 9000000)),
         });
         setNewGoal(res.data.stats.goal || 5000);
         setLoading(false);
@@ -74,6 +89,7 @@ export default function MemberDashboard() {
           recurring: { enabled: true, type: "Tithe", amount: 500 },
           monthlyTrend: [200, 500, 1000, 0, 2000, 1550, 800],
           memberName: "Mzizi Mzwakhe",
+          memberAccountNumber: Math.floor(1000000 + Math.random() * 9000000),
         });
         setLoading(false);
       });
@@ -94,18 +110,132 @@ export default function MemberDashboard() {
     setTimeout(() => setBarWidth(Math.min((stats.totalGiven / newGoal) * 100, 100)), 200);
   };
 
+  // CSV Download
+  function downloadCSV() {
+    const headers = ["Date", "Project", "Amount"];
+    const rows = donations.map(d =>
+      [new Date(d.date).toLocaleString(), d.project, d.amount].join(",")
+    );
+    const csvContent = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `churpay_donations_${stats.memberName.replace(/\s+/g, "_")}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // PDF Statement Download
+  function downloadPDF() {
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.setTextColor("#7c3aed");
+    doc.text("ChurPay Giving Statement", 20, 20);
+    doc.setFontSize(12);
+    doc.setTextColor("#333");
+    doc.text(`Name: ${stats.memberName || "-"}`, 20, 35);
+    doc.text(`Church: ${stats.churchName || "-"}`, 20, 43);
+    doc.text(`Total Given: R${stats.totalGiven}`, 20, 51);
+    doc.text("Recent Donations:", 20, 61);
+    let y = 70;
+    doc.setFontSize(10);
+    doc.text("Date", 20, y);
+    doc.text("Project", 70, y);
+    doc.text("Amount", 150, y);
+    y += 6;
+    donations.slice(0, 20).forEach(d => {
+      doc.text(new Date(d.date).toLocaleString(), 20, y);
+      doc.text(d.project, 70, y);
+      doc.text("R" + d.amount, 150, y);
+      y += 6;
+      if (y > 270) {
+        doc.addPage();
+        y = 20;
+      }
+    });
+    doc.save(`churpay_statement_${stats.memberName.replace(/\s+/g, "_")}.pdf`);
+  }
+
   return (
-    <div className="w-full max-w-3xl mx-auto px-3 py-8 font-inter">
+    <div className="w-full max-w-5xl mx-auto px-3 py-8 font-inter">
       {/* Hero Card */}
-      <div className="relative bg-gradient-to-br from-purple-700 to-indigo-500 rounded-3xl shadow-xl p-6 mb-7 text-white overflow-hidden">
+      <div className="relative bg-gradient-to-br from-purple-700 to-indigo-500 dark:from-purple-900 dark:to-gray-900 rounded-3xl shadow-xl p-10 mb-10 text-white overflow-hidden flex flex-col md:flex-row items-center gap-8">
         <div className="absolute top-0 right-0 opacity-10 text-9xl select-none pointer-events-none">💜</div>
-        <div className="flex items-center gap-4">
-          <FaUserCircle className="text-6xl drop-shadow-xl" />
+        <div className="flex items-center gap-6 flex-1">
+          <FaUserCircle className="text-7xl drop-shadow-xl" />
           <div>
             <div className="text-lg font-semibold tracking-wide mb-1">Welcome back,</div>
-            <div className="text-2xl font-bold leading-tight">{stats.memberName}</div>
+            <div className="text-3xl font-bold leading-tight">{stats.memberName}</div>
+            {stats.memberAccountNumber && (
+              <div className="text-base font-mono text-yellow-200 mt-1 flex items-center gap-2">
+                <span className="font-semibold text-xs text-purple-100">Account Number:</span>
+                <span className="bg-purple-900 text-yellow-200 px-2 py-0.5 rounded text-xs tracking-widest" title="Account Number">
+                  {String(stats.memberAccountNumber).padStart(7, '0')}
+                </span>
+              </div>
+            )}
+            <div className="text-base font-medium text-white mt-0.5">Member</div>
+            <div className="text-base font-semibold text-yellow-200 mt-1 flex items-center gap-2">
+              <FaChurch className="inline text-yellow-300" /> {stats.churchName || "No church linked"}
+            </div>
             <div className="text-xs mt-2 text-purple-200">"Your giving is making an eternal impact."</div>
           </div>
+        </div>
+        {/* Give Now Button in Hero Card */}
+        <div className="flex flex-col items-end relative mt-6 md:mt-0">
+          <button
+            className="bg-gradient-to-r from-yellow-400 to-purple-500 hover:from-purple-500 hover:to-yellow-400 text-white px-8 py-3 rounded-full text-lg font-bold shadow-xl transition-all border-2 border-white"
+            onClick={() => setShowGiveOptions(prev => !prev)}
+          >
+            Give Now
+          </button>
+          {showGiveOptions && (
+            <div className="fixed inset-0 z-30 flex items-center justify-center bg-black bg-opacity-40" onClick={() => setShowGiveOptions(false)}>
+              <form
+                className="flex flex-col bg-white dark:bg-gray-900 border border-purple-200 dark:border-purple-700 rounded-xl shadow-2xl p-6 w-72 z-40 relative"
+                onClick={e => e.stopPropagation()}
+                onSubmit={e => {
+                  e.preventDefault();
+                  setShowGiveOptions(false);
+                  const payfastUrl = `https://sandbox.payfast.co.za/eng/process?amount=${giveAmount}&item_name=${givingType}`;
+                  window.location.href = payfastUrl;
+                }}
+              >
+                <label className="mb-2 text-purple-700 dark:text-yellow-200 font-semibold">Giving Type</label>
+                <select
+                  value={givingType}
+                  onChange={e => setGivingType(e.target.value)}
+                  className="mb-3 px-3 py-2 rounded-lg border border-purple-200 dark:border-purple-700 bg-white dark:bg-gray-800 text-purple-800 dark:text-yellow-100 font-semibold text-base shadow focus:outline-none focus:border-purple-400 transition"
+                >
+                  <option value="Tithe">Offerings</option>
+                  <option value="Tithe">Tithe</option>
+                </select>
+                <label className="mb-2 text-purple-700 dark:text-yellow-200 font-semibold">Amount (R)</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={giveAmount}
+                  onChange={e => setGiveAmount(e.target.value)}
+                  className="mb-3 px-3 py-2 rounded-lg border border-purple-200 dark:border-purple-700 bg-white dark:bg-gray-800 text-purple-800 dark:text-yellow-100 font-semibold text-base shadow focus:outline-none focus:border-purple-400 transition"
+                  required
+                />
+                <button
+                  type="submit"
+                  className="bg-gradient-to-r from-purple-600 to-indigo-500 hover:from-indigo-500 hover:to-purple-600 text-white px-6 py-2 rounded-full text-base font-bold shadow-xl transition-all mb-2"
+                >
+                  Give Now
+                </button>
+                <button
+                  type="button"
+                  className="text-gray-500 dark:text-gray-300 font-medium py-1 rounded hover:bg-purple-50 dark:hover:bg-gray-800 transition text-xs"
+                  onClick={() => setShowGiveOptions(false)}
+                >
+                  Cancel
+                </button>
+              </form>
+            </div>
+          )}
         </div>
       </div>
       {/* Dashboard Main */}
@@ -255,9 +385,25 @@ export default function MemberDashboard() {
         </div>
       </div>
       {/* Recent Donations */}
-      <h2 className="text-xl font-bold mb-3 text-purple-700 flex items-center gap-2">
-        <FaHandsHelping className="text-purple-400" /> Recent Donations
-      </h2>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-3 gap-3">
+        <h2 className="text-xl font-bold text-purple-700 flex items-center gap-2">
+          <FaHandsHelping className="text-purple-400" /> Recent Donations
+        </h2>
+        <div className="flex gap-2">
+          <button
+            onClick={downloadCSV}
+            className="bg-purple-700 text-yellow-300 font-bold px-5 py-2 rounded-xl shadow hover:bg-purple-800 transition text-xs md:text-sm"
+          >
+            Download CSV
+          </button>
+          <button
+            onClick={downloadPDF}
+            className="bg-yellow-400 text-purple-900 font-bold px-5 py-2 rounded-xl shadow hover:bg-yellow-300 transition text-xs md:text-sm"
+          >
+            Download PDF Statement
+          </button>
+        </div>
+      </div>
       <div className="bg-white rounded-2xl shadow overflow-x-auto mb-6">
         <table className="min-w-full divide-y divide-purple-100">
           <thead>
@@ -286,13 +432,8 @@ export default function MemberDashboard() {
         </table>
       </div>
       {/* Footer/Call to Action */}
-      <div className="text-center mt-4 mb-2">
-        <button className="bg-gradient-to-r from-purple-600 to-indigo-500 hover:from-indigo-500 hover:to-purple-600 text-white px-8 py-3 rounded-full text-lg font-bold shadow-xl transition-all animate-bounce">
-          Give Now
-        </button>
-        <div className="text-xs text-gray-400 mt-2">
-          Thank you for being a blessing through ChurPay. Every rand counts! 💜
-        </div>
+      <div className="text-xs text-gray-400 mt-2 text-center">
+        Thank you for being a blessing through ChurPay. Every rand counts! 💜
       </div>
     </div>
   );

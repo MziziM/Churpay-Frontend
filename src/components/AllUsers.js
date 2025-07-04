@@ -53,14 +53,25 @@ export default function AllUsers() {
 
   return (
     <section className="w-full max-w-6xl mx-auto px-4 py-10 font-inter">
+      {/* Hero Card */}
+      <div className="relative bg-gradient-to-br from-purple-700 to-indigo-500 dark:from-purple-900 dark:to-gray-900 rounded-3xl shadow-xl p-10 mb-10 text-white overflow-hidden flex flex-col md:flex-row items-center gap-8">
+        <div className="absolute top-0 right-0 opacity-10 text-9xl select-none pointer-events-none">👥</div>
+        <div className="flex items-center gap-6 flex-1">
+          <FaUsersCog className="text-7xl drop-shadow-xl" />
+          <div>
+            <div className="text-lg font-semibold tracking-wide mb-1">Admin Panel</div>
+            <div className="text-3xl font-bold leading-tight">All Users</div>
+            <div className="text-base font-medium text-white mt-0.5">Browse, search, and export all churches and members.</div>
+            <div className="text-xs mt-2 text-purple-200">"Manage your ChurPay community with ease."</div>
+          </div>
+        </div>
+      </div>
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-10">
         <div className="flex items-center gap-3">
-          <FaUsersCog className="text-3xl text-purple-600" />
-          <div>
-            <div className="text-3xl font-bold text-purple-900 dark:text-purple-300 mb-1">All Users</div>
-            <div className="text-sm text-gray-400 dark:text-gray-500">Browse, search, and export all churches and members.</div>
-          </div>
+         
+
+
         </div>
       </div>
       {msg && <div className="mb-6 text-red-600 font-semibold text-center">{msg}</div>}

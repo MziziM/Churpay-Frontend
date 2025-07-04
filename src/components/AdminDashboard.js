@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 import {
   FaUsers,
   FaChurch,
@@ -14,36 +15,47 @@ import { useNavigate } from "react-router-dom";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
-  // Example mock stats
-  const [stats, setStats] = useState({
-    churches: 12,
-    members: 340,
-    totalRevenue: 52250,
-    totalProjects: 28,
-    topChurch: "Gospel Life Center",
-    topProject: "Feeding Scheme",
-    newMessages: 7,
-    ideas: 3,
-  });
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // TODO: fetch real stats from backend!
+    setLoading(true);
+    axios.get("https://churpay-backend.onrender.com/api/admin/stats")
+      .then(res => {
+        setStats(res.data);
+        setLoading(false);
+      })
+      .catch(() => {
+        setError("Could not load admin stats");
+        setLoading(false);
+      });
   }, []);
 
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-screen text-xl text-purple-700">Loading...</div>;
+  }
+  if (error || !stats) {
+    return <div className="flex items-center justify-center min-h-screen text-xl text-red-600">{error || "No stats available"}</div>;
+  }
+
   return (
-    <div className="w-full max-w-6xl mx-auto px-4 py-10 font-inter">
-      {/* Header */}
-      <div className="mb-10">
-        <div className="text-3xl font-bold text-purple-800 dark:text-purple-300 mb-2 flex items-center gap-3">
-          <MdOutlineDashboard className="text-purple-500 dark:text-purple-200 text-3xl" />
-          Admin Dashboard
-        </div>
-        <div className="text-sm text-gray-400 dark:text-gray-500">
-          Welcome admin! Manage churches, projects, users and more.
+    <div className="w-full max-w-5xl mx-auto px-3 py-8 font-inter">
+      {/* Hero Card */}
+      <div className="relative bg-gradient-to-br from-purple-700 to-indigo-500 rounded-3xl shadow-xl p-10 mb-10 text-white overflow-hidden flex flex-col md:flex-row items-center gap-8">
+        <div className="absolute top-0 right-0 opacity-10 text-9xl select-none pointer-events-none">💜</div>
+        <div className="flex items-center gap-6 flex-1">
+          <MdOutlineDashboard className="text-7xl drop-shadow-xl" />
+          <div>
+            <div className="text-lg font-semibold tracking-wide mb-1">Welcome,</div>
+            <div className="text-3xl font-bold leading-tight">Admin</div>
+            <div className="text-base font-medium text-white mt-0.5">Platform Admin</div>
+            <div className="text-xs mt-2 text-purple-200">"Manage churches, projects, users and more."</div>
+          </div>
         </div>
       </div>
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-10">
+      {/* Summary Cards Row */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">
         <SummaryCard
           icon={<FaChurch className="text-2xl text-purple-500 mb-2" />}
           value={stats.churches}
@@ -64,13 +76,6 @@ export default function AdminDashboard() {
           label="Total Revenue"
           borderColor="border-yellow-400 dark:border-yellow-500"
           valueClass="text-yellow-700 dark:text-yellow-200"
-        />
-        <SummaryCard
-          icon={<FaProjectDiagram className="text-2xl text-blue-500 mb-2" />}
-          value={stats.totalProjects}
-          label="Projects"
-          borderColor="border-blue-400 dark:border-blue-600"
-          valueClass="text-blue-700 dark:text-blue-200"
         />
       </div>
       {/* Quick Stats */}

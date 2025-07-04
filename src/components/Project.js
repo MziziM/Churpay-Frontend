@@ -3,35 +3,13 @@ import { useParams, Link } from "react-router-dom";
 import jsPDF from "jspdf";
 import Confetti from "react-confetti";
 import { useWindowSize } from "react-use";
-
-// Demo project data
-const demoProjects = [
-  {
-    id: 1,
-    title: "Roof Repair",
-    church: "GCC Faith Center",
-    description: "Help us fix our church roof after storm damage.",
-    goal: 10000,
-    raised: 3500,
-    image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb",
-    status: "Active",
-  },
-  {
-    id: 101,
-    title: "Youth Camp",
-    church: "Bethel Life",
-    description: "Sponsor our annual youth retreat and change lives!",
-    goal: 6000,
-    raised: 2200,
-    image: "https://images.unsplash.com/photo-1464983953574-0892a716854b",
-    status: "Rejected",
-  },
-  // You may add more demo projects with status: "Pending", etc.
-];
+import axios from "axios";
 
 export default function Project() {
   const { id } = useParams();
-  const project = demoProjects.find(p => p.id === Number(id));
+  const [project, setProject] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [showThankYou, setShowThankYou] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
@@ -40,6 +18,20 @@ export default function Project() {
   const { width, height } = useWindowSize();
   const [toast, setToast] = useState(null);
 
+  useEffect(() => {
+    if (!id) return;
+    setLoading(true);
+    axios.get(`https://churpay-backend.onrender.com/api/projects/${id}`)
+      .then(res => {
+        setProject(res.data);
+        setLoading(false);
+      })
+      .catch(() => {
+        setError("Project not found");
+        setLoading(false);
+      });
+  }, [id]);
+
   // Toast utility
   function showToast(msg, type = "success") {
     setToast({ msg, type });
@@ -47,16 +39,16 @@ export default function Project() {
   }
 
   // Show Thank You after PayFast redirect (?paid=1)
- useEffect(() => {
-  const params = new URLSearchParams(window.location.search);
-  console.log("Query paid param:", params.get("paid")); // DEBUG
-  if (params.get("paid") === "1") {
-    setShowThankYou(true);
-    setShowConfetti(true);
-    setTimeout(() => setShowConfetti(false), 4000);
-    window.history.replaceState({}, document.title, window.location.pathname);
-  }
-}, []);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    console.log("Query paid param:", params.get("paid")); // DEBUG
+    if (params.get("paid") === "1") {
+      setShowThankYou(true);
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 4000);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
 
   // Social sharing
   const shareUrl = window.location.href;
@@ -123,11 +115,18 @@ export default function Project() {
     window.open(payfastUrl, "_blank");
   };
 
-  if (!project) {
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-screen text-xl text-purple-700">Loading...</div>;
+  }
+  if (error || !project) {
     return (
       <div className="flex flex-col items-center py-16">
-        <h2 className="text-2xl font-bold text-purple-700 mb-4">Project not found</h2>
-        <Link to="/projects" className="text-purple-700 underline">Back to Projects</Link>
+        <h2 className="text-2xl font-bold text-purple-700 mb-4">
+          {error || "Project not found"}
+        </h2>
+        <Link to="/projects" className="text-purple-700 underline">
+          Back to Projects
+        </Link>
       </div>
     );
   }

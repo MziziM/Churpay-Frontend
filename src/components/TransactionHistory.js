@@ -32,7 +32,7 @@ export default function TransactionHistory() {
       setLoading(false);
       return;
     }
-    axios.get("http://localhost:5000/api/transactions", { headers: { Authorization: `Bearer ${token}` } })
+    axios.get("https://churpay-backend.onrender.com/api/transactions", { headers: { Authorization: `Bearer ${token}` } })
       .then(res => {
         setTransactions(res.data);
         setLoading(false);
@@ -49,10 +49,10 @@ export default function TransactionHistory() {
     setProcessingId(txId);
     try {
       const token = localStorage.getItem("churpay_token");
-      await axios.post("http://localhost:5000/api/admin/refund-transaction", { token, transaction_id: txId });
+      await axios.post("https://churpay-backend.onrender.com/api/admin/refund-transaction", { token, transaction_id: txId });
       alert("Transaction refunded successfully.");
       // Refresh transactions list
-      const res = await axios.get("http://localhost:5000/api/transactions", { headers: { Authorization: `Bearer ${token}` } });
+      const res = await axios.get("https://churpay-backend.onrender.com/api/transactions", { headers: { Authorization: `Bearer ${token}` } });
       setTransactions(res.data);
     } catch (error) {
       alert("Failed to refund transaction.");
@@ -72,14 +72,21 @@ export default function TransactionHistory() {
     );
   });
 
-  if (loading) return <div>Loading transactions...</div>;
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-700 to-indigo-500 dark:from-purple-900 dark:to-gray-900 py-8 px-2">
+      <div className="w-full max-w-3xl bg-white dark:bg-gray-900 rounded-3xl shadow-2xl px-10 py-14 flex flex-col items-center">
+        <h1 className="text-4xl md:text-5xl font-extrabold text-yellow-300 mb-6 text-center drop-shadow-lg">Transaction History</h1>
+        <div className="text-yellow-100 text-lg text-center">Loading transactions...</div>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="flex flex-col items-center py-10 px-2">
-      <h1 className="text-3xl font-bold text-purple-800 mb-6">Transaction History</h1>
-      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-2xl">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-700 to-indigo-500 dark:from-purple-900 dark:to-gray-900 py-8 px-2">
+      <div className="w-full max-w-3xl bg-white dark:bg-gray-900 rounded-3xl shadow-2xl px-10 py-14 flex flex-col items-center">
+        <h1 className="text-4xl md:text-5xl font-extrabold text-yellow-300 mb-6 text-center drop-shadow-lg">Transaction History</h1>
         {/* Download CSV & Search Bar */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4 w-full">
           <button
             onClick={() => downloadCSV(filtered)}
             className="bg-purple-700 text-yellow-300 font-bold px-5 py-2 rounded-xl shadow hover:bg-purple-800 transition"
@@ -88,56 +95,58 @@ export default function TransactionHistory() {
           </button>
           <input
             type="text"
-            className="border border-purple-200 rounded px-4 py-2 w-full md:w-72 text-gray-800"
+            className="border border-purple-200 dark:border-purple-700 rounded px-4 py-2 w-full md:w-72 text-gray-800 dark:bg-gray-800 dark:text-yellow-100"
             placeholder="Search project, church, date, ref..."
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
         </div>
-        <table className="min-w-full divide-y divide-purple-200">
-          <thead>
-            <tr>
-              <th className="px-4 py-2 text-left text-xs font-bold text-purple-700 uppercase">Date</th>
-              <th className="px-4 py-2 text-left text-xs font-bold text-purple-700 uppercase">Project</th>
-              <th className="px-4 py-2 text-left text-xs font-bold text-purple-700 uppercase">Church</th>
-              <th className="px-4 py-2 text-right text-xs font-bold text-purple-700 uppercase">Amount</th>
-              <th className="px-4 py-2 text-left text-xs font-bold text-purple-700 uppercase">Reference</th>
-              <th className="px-4 py-2 text-center text-xs font-bold text-purple-700 uppercase">Refund</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.length === 0 && (
+        <div className="overflow-x-auto w-full">
+          <table className="min-w-full divide-y divide-purple-200 dark:divide-purple-800">
+            <thead>
               <tr>
-                <td colSpan={6} className="py-8 text-center text-gray-400">
-                  No transactions found.
-                </td>
+                <th className="px-4 py-2 text-left text-xs font-bold text-purple-700 dark:text-yellow-200 uppercase">Date</th>
+                <th className="px-4 py-2 text-left text-xs font-bold text-purple-700 dark:text-yellow-200 uppercase">Project</th>
+                <th className="px-4 py-2 text-left text-xs font-bold text-purple-700 dark:text-yellow-200 uppercase">Church</th>
+                <th className="px-4 py-2 text-right text-xs font-bold text-purple-700 dark:text-yellow-200 uppercase">Amount</th>
+                <th className="px-4 py-2 text-left text-xs font-bold text-purple-700 dark:text-yellow-200 uppercase">Reference</th>
+                <th className="px-4 py-2 text-center text-xs font-bold text-purple-700 dark:text-yellow-200 uppercase">Refund</th>
               </tr>
-            )}
-            {filtered.map(tx => (
-              <tr key={tx.id} className="hover:bg-purple-50 transition">
-                <td className="px-4 py-2 text-sm text-gray-700">{tx.date}</td>
-                <td className="px-4 py-2 text-sm text-gray-800">{tx.project}</td>
-                <td className="px-4 py-2 text-sm text-gray-600">{tx.church}</td>
-                <td className="px-4 py-2 text-sm text-right font-bold text-purple-800">R{tx.amount}</td>
-                <td className="px-4 py-2 text-xs text-gray-400 font-mono">{tx.ref}</td>
-                <td className="px-4 py-2 text-center">
-                  {tx.status !== "Refunded" ? (
-                    <button
-                      disabled={processingId === tx.id}
-                      onClick={() => handleRefund(tx.id)}
-                      className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
-                    >
-                      {processingId === tx.id ? "Processing..." : "Refund"}
-                    </button>
-                  ) : (
-                    <span className="text-green-600 font-semibold">Refunded</span>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <div className="mt-6 text-xs text-gray-400 text-center">
+            </thead>
+            <tbody>
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="py-8 text-center text-gray-400 dark:text-gray-500">
+                    No transactions found.
+                  </td>
+                </tr>
+              )}
+              {filtered.map(tx => (
+                <tr key={tx.id} className="hover:bg-purple-50 dark:hover:bg-purple-900 transition">
+                  <td className="px-4 py-2 text-sm text-gray-700 dark:text-yellow-100">{tx.date}</td>
+                  <td className="px-4 py-2 text-sm text-gray-800 dark:text-yellow-100">{tx.project}</td>
+                  <td className="px-4 py-2 text-sm text-gray-600 dark:text-yellow-100">{tx.church}</td>
+                  <td className="px-4 py-2 text-sm text-right font-bold text-purple-800 dark:text-yellow-200">R{tx.amount}</td>
+                  <td className="px-4 py-2 text-xs text-gray-400 dark:text-yellow-200 font-mono">{tx.ref}</td>
+                  <td className="px-4 py-2 text-center">
+                    {tx.status !== "Refunded" ? (
+                      <button
+                        disabled={processingId === tx.id}
+                        onClick={() => handleRefund(tx.id)}
+                        className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+                      >
+                        {processingId === tx.id ? "Processing..." : "Refund"}
+                      </button>
+                    ) : (
+                      <span className="text-green-600 font-semibold">Refunded</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="mt-6 text-xs text-gray-400 dark:text-gray-500 text-center">
           Showing {filtered.length} transaction{filtered.length !== 1 && "s"}.
         </div>
       </div>

@@ -1,7 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
-
 // Main pages
 import Home from "./components/Home";
 import Signup from "./components/Signup";
@@ -17,7 +16,6 @@ import Project from "./components/Project";
 import ProjectList from "./components/ProjectList";
 import TransactionHistory from "./components/TransactionHistory";
 import DemoLogin from "./components/DemoLogin";
-
 // Admin tools
 import AllUsers from "./components/AllUsers";
 import PendingChurches from "./components/PendingChurches";
@@ -25,7 +23,6 @@ import AdminAnalytics from "./components/AdminAnalytics";
 import AdminChurchManagement from "./components/AdminChurchManagement";
 import BulkMessage from "./components/BulkMessage";
 import ActivityLog from "./components/ActivityLog";
-
 // Profile & church management
 import Profile from "./components/Profile";
 import Settings from "./components/Settings";

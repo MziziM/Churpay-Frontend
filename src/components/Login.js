@@ -32,61 +32,62 @@ export default function Login() {
   }
 
   return (
-    <div className="flex flex-col items-center min-h-screen bg-purple-50 py-8 px-3">
-      {/* Login Card */}
-      <form
-        className="bg-white rounded-3xl shadow-2xl p-8 md:p-12 w-full max-w-md mt-14 flex flex-col items-center"
-        onSubmit={handleLogin}
-      >
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-700 to-indigo-500 dark:from-purple-900 dark:to-gray-900 py-8 px-2">
+      <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl p-10 max-w-xl w-full flex flex-col items-center">
         <img
           src="/churpay_logo.png"
           alt="ChurPay Logo"
           className="h-16 md:h-20 mb-7"
           style={{ objectFit: "contain" }}
         />
-        <h1 className="text-3xl md:text-4xl font-extrabold text-purple-800 mb-2 text-center">Sign In to ChurPay</h1>
-        <div className="mb-7 text-gray-500 text-center text-base md:text-lg">
+        <h1 className="text-4xl md:text-5xl font-extrabold text-yellow-300 mb-2 text-center drop-shadow-lg">Sign In to ChurPay</h1>
+        <div className="mb-7 text-yellow-100 text-center text-lg md:text-xl">
           Welcome back! Please enter your login details below.
         </div>
-        <input
-          className="w-full border border-purple-200 rounded-xl px-5 py-4 mb-4 text-lg md:text-xl focus:outline-none focus:ring-2 focus:ring-purple-300"
-          placeholder="Email"
-          type="email"
-          autoFocus
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-          required
-        />
-        <input
-          className="w-full border border-purple-200 rounded-xl px-5 py-4 mb-6 text-lg md:text-xl focus:outline-none focus:ring-2 focus:ring-purple-300"
-          placeholder="Password"
-          type="password"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          required
-        />
-        <button
-          className="bg-purple-700 text-yellow-300 font-bold w-full py-4 rounded-2xl hover:bg-purple-800 transition mb-3 text-lg md:text-xl shadow"
-          type="submit"
-          disabled={loading}
+        <form
+          className="w-full flex flex-col items-center"
+          onSubmit={handleLogin}
         >
-          {loading ? "Logging in..." : "Sign In"}
-        </button>
-        {msg && (
-          <div className={`text-center mt-2 ${msg.includes("success") ? "text-green-600" : "text-red-500"}`}>
-            {msg}
-          </div>
-        )}
-        <div className="mt-7 text-base text-center text-gray-600">
-          New here?{" "}
-          <Link
-            to="/signup"
-            className="text-purple-700 font-semibold hover:underline"
+          <input
+            className="w-full border-2 border-purple-100 dark:border-purple-700 rounded-xl px-5 py-4 mb-4 text-lg md:text-xl focus:outline-none focus:ring-2 focus:ring-purple-300 dark:bg-gray-800 dark:text-yellow-100"
+            placeholder="Email"
+            type="email"
+            autoFocus
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            required
+          />
+          <input
+            className="w-full border-2 border-purple-100 dark:border-purple-700 rounded-xl px-5 py-4 mb-6 text-lg md:text-xl focus:outline-none focus:ring-2 focus:ring-purple-300 dark:bg-gray-800 dark:text-yellow-100"
+            placeholder="Password"
+            type="password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            required
+          />
+          <button
+            className="bg-purple-700 text-yellow-300 font-bold w-full py-4 rounded-2xl hover:bg-purple-800 transition mb-3 text-lg md:text-xl shadow"
+            type="submit"
+            disabled={loading}
           >
-            Create your account
-          </Link>
-        </div>
-      </form>
+            {loading ? "Logging in..." : "Sign In"}
+          </button>
+          {msg && (
+            <div className={`text-center mt-2 ${msg.includes("success") ? "text-green-600" : "text-red-500"}`}>
+              {msg}
+            </div>
+          )}
+          <div className="mt-7 text-base text-center text-yellow-100">
+            New here?{" "}
+            <Link
+              to="/signup"
+              className="text-yellow-300 font-semibold hover:underline"
+            >
+              Create your account
+            </Link>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

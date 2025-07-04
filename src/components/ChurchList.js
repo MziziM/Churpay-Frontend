@@ -15,26 +15,28 @@ function ChurchList() {
   );
 
   useEffect(() => {
-    axios.get("http://localhost:5000/api/churches")
+    axios.get("https://churpay-backend.onrender.com/api/churches")
       .then(res => setChurches(res.data))
       .catch(() => setChurches([]));
   }, []);
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 py-10 font-inter">
-      {/* Modern header with church icon */}
-      <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <FaChurch className="text-3xl text-purple-600" />
+      {/* Hero Card */}
+      <div className="relative bg-gradient-to-br from-purple-700 to-indigo-500 dark:from-purple-900 dark:to-gray-900 rounded-3xl shadow-xl p-10 mb-10 text-white overflow-hidden flex flex-col md:flex-row items-center gap-8">
+        <div className="absolute top-0 right-0 opacity-10 text-9xl select-none pointer-events-none">⛪️</div>
+        <div className="flex items-center gap-6 flex-1">
+          <FaChurch className="text-7xl drop-shadow-xl" />
           <div>
-            <div className="text-3xl font-bold text-purple-800 dark:text-purple-300 mb-1">
-              Church Directory
-            </div>
-            <div className="text-sm text-gray-400 dark:text-gray-500">
-              Browse, search, and manage all registered churches.
-            </div>
+            <div className="text-lg font-semibold tracking-wide mb-1">Directory</div>
+            <div className="text-3xl font-bold leading-tight">Churches</div>
+            <div className="text-base font-medium text-white mt-0.5">Browse, search, and manage all registered churches.</div>
+            <div className="text-xs mt-2 text-purple-200">"Find and connect with churches in your community."</div>
           </div>
         </div>
+      </div>
+      {/* Add Church Button - moved below hero card */}
+      <div className="flex justify-end mb-8">
         <Link
           to="/admin/churches/new"
           className="flex items-center bg-green-600 hover:bg-green-700 text-white font-bold px-5 py-3 rounded-xl shadow transition"
@@ -65,7 +67,7 @@ function ChurchList() {
           >
             {church.logo_url ? (
               <img
-                src={`http://localhost:5000${church.logo_url}`}
+                src={`https://churpay-backend.onrender.com${church.logo_url}`}
                 alt="Church Logo"
                 className="w-20 h-20 object-cover rounded-2xl ring-2 ring-purple-300 shadow-lg mb-4 sm:mb-0 sm:mr-6 bg-white"
               />

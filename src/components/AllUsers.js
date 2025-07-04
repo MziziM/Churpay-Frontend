@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { FaUsers, FaChurch, FaFileCsv, FaUsersCog } from "react-icons/fa";
 
 function exportCSV(rows, headers, filename) {
   const csvRows = [
@@ -51,22 +52,35 @@ export default function AllUsers() {
   );
 
   return (
-    <section className="max-w-5xl mx-auto mt-10 p-8 bg-white rounded-2xl shadow-xl">
-      <h2 className="text-3xl font-bold text-purple-900 mb-6">All Users</h2>
+    <section className="w-full max-w-6xl mx-auto px-4 py-10 font-inter">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-10">
+        <div className="flex items-center gap-3">
+          <FaUsersCog className="text-3xl text-purple-600" />
+          <div>
+            <div className="text-3xl font-bold text-purple-900 dark:text-purple-300 mb-1">All Users</div>
+            <div className="text-sm text-gray-400 dark:text-gray-500">Browse, search, and export all churches and members.</div>
+          </div>
+        </div>
+      </div>
       {msg && <div className="mb-6 text-red-600 font-semibold text-center">{msg}</div>}
 
-      <div className="flex gap-4 mb-6">
+      <div className="flex gap-4 mb-6 items-center flex-wrap">
         <button
           onClick={() => setTab("churches")}
-          className={`px-6 py-2 rounded-xl font-bold ${tab === "churches" ? "bg-purple-700 text-yellow-300" : "bg-gray-200 text-purple-800"}`}
+          className={`px-6 py-2 rounded-xl font-bold flex items-center gap-2 ${tab === "churches"
+            ? "bg-purple-700 text-yellow-300"
+            : "bg-gray-200 text-purple-800 dark:bg-gray-800 dark:text-purple-200"}`}
         >
-          Churches
+          <FaChurch /> Churches
         </button>
         <button
           onClick={() => setTab("members")}
-          className={`px-6 py-2 rounded-xl font-bold ${tab === "members" ? "bg-purple-700 text-yellow-300" : "bg-gray-200 text-purple-800"}`}
+          className={`px-6 py-2 rounded-xl font-bold flex items-center gap-2 ${tab === "members"
+            ? "bg-purple-700 text-yellow-300"
+            : "bg-gray-200 text-purple-800 dark:bg-gray-800 dark:text-purple-200"}`}
         >
-          Members
+          <FaUsers /> Members
         </button>
         <input
           type="text"
@@ -86,9 +100,9 @@ export default function AllUsers() {
                 `churpay_${tab}.csv`
               )
             }
-            className="ml-4 bg-purple-700 text-yellow-300 font-bold px-5 py-2 rounded-xl shadow hover:bg-purple-800 transition"
+            className="ml-4 bg-purple-700 text-yellow-300 font-bold px-5 py-2 rounded-xl shadow hover:bg-purple-800 transition flex items-center gap-2"
           >
-            Export CSV
+            <FaFileCsv /> Export CSV
           </button>
         )}
       </div>
@@ -96,7 +110,7 @@ export default function AllUsers() {
       {/* TABLES */}
       {tab === "churches" && (
         <div className="overflow-x-auto rounded-xl shadow-md">
-          <table className="min-w-full bg-white border border-purple-200 rounded-xl">
+          <table className="min-w-full bg-white dark:bg-gray-900 border border-purple-200 dark:border-purple-800 rounded-xl">
             <thead className="bg-purple-700 text-white">
               <tr>
                 <th className="py-3 px-6 text-left font-semibold">Church Name</th>
@@ -108,7 +122,7 @@ export default function AllUsers() {
               {filteredChurches.map((c, i) => (
                 <tr
                   key={i}
-                  className="border-b border-purple-100 hover:bg-yellow-50 transition-colors duration-200"
+                  className="border-b border-purple-100 dark:border-purple-900 hover:bg-yellow-50 dark:hover:bg-purple-950 transition-colors duration-200"
                 >
                   <td className="py-3 px-6">{c.church_name}</td>
                   <td className="py-3 px-6">{c.email}</td>
@@ -117,7 +131,7 @@ export default function AllUsers() {
               ))}
               {filteredChurches.length === 0 && (
                 <tr>
-                  <td colSpan={3} className="text-center py-6 text-purple-600 font-semibold">
+                  <td colSpan={3} className="text-center py-6 text-purple-600 dark:text-purple-300 font-semibold">
                     No churches found.
                   </td>
                 </tr>
@@ -128,7 +142,7 @@ export default function AllUsers() {
       )}
       {tab === "members" && (
         <div className="overflow-x-auto rounded-xl shadow-md">
-          <table className="min-w-full bg-white border border-purple-200 rounded-xl">
+          <table className="min-w-full bg-white dark:bg-gray-900 border border-purple-200 dark:border-purple-800 rounded-xl">
             <thead className="bg-purple-700 text-white">
               <tr>
                 <th className="py-3 px-6 text-left font-semibold">Name</th>
@@ -140,7 +154,7 @@ export default function AllUsers() {
               {filteredMembers.map((m, i) => (
                 <tr
                   key={i}
-                  className="border-b border-purple-100 hover:bg-yellow-50 transition-colors duration-200"
+                  className="border-b border-purple-100 dark:border-purple-900 hover:bg-yellow-50 dark:hover:bg-purple-950 transition-colors duration-200"
                 >
                   <td className="py-3 px-6">{m.name}</td>
                   <td className="py-3 px-6">{m.email}</td>
@@ -149,7 +163,7 @@ export default function AllUsers() {
               ))}
               {filteredMembers.length === 0 && (
                 <tr>
-                  <td colSpan={3} className="text-center py-6 text-purple-600 font-semibold">
+                  <td colSpan={3} className="text-center py-6 text-purple-600 dark:text-purple-300 font-semibold">
                     No members found.
                   </td>
                 </tr>

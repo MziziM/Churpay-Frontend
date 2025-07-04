@@ -4,21 +4,20 @@ import { Bar } from "react-chartjs-2";
 import { Chart, BarElement, CategoryScale, LinearScale } from "chart.js";
 Chart.register(BarElement, CategoryScale, LinearScale);
 import axios from "axios";
+import { FaMoneyBillWave, FaUsers, FaChurch, FaProjectDiagram, FaRegCalendarCheck, FaDownload, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 import PayoutRequestForm from "./PayoutRequestForm";
 import MyPayouts from "./MyPayouts";
-// Replace this with your actual logic for fetching the user's token:
-const userToken = window.localStorage.getItem("jwt_token");
-export default function ChurchDashboard() {
-  // Replace with real church login logic later
-  const CHURCH_NAME = "GCC Faith Center";
 
-  // State for backend projects and donations
+// Replace with your real logic for fetching the user's token:
+const userToken = window.localStorage.getItem("jwt_token");
+
+export default function ChurchDashboard() {
+  const CHURCH_NAME = "GCC Faith Center";
   const [projects, setProjects] = useState([]);
   const [donations, setDonations] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Fetch all projects and all donations from backend
   useEffect(() => {
     setLoading(true);
     axios.get("http://localhost:5000/api/projects")
@@ -78,7 +77,6 @@ export default function ChurchDashboard() {
     doc.save(`church_giving_statement.pdf`);
   }
 
-  // Handle new project submission
   function handleProjectSubmit(e) {
     e.preventDefault();
     const form = e.target;
@@ -105,7 +103,6 @@ export default function ChurchDashboard() {
       .catch(() => alert("Failed to save project. Backend may be offline."));
   }
 
-  // Approve or reject a project
   function handleProjectApproval(id, newStatus) {
     axios.patch(`http://localhost:5000/api/projects/${id}/status`, { status: newStatus })
       .then(() => {
@@ -142,66 +139,99 @@ export default function ChurchDashboard() {
   };
 
   return (
-    <section className="max-w-4xl mx-auto mt-6 md:mt-12 p-2 md:p-8 bg-white rounded-2xl shadow-xl">
-      <h2 className="text-2xl md:text-3xl font-bold text-purple-800 mb-6">Church Dashboard</h2>
-      {/* Stats - Pro Style */}
-      <div className="flex flex-col md:flex-row gap-6 mb-8">
-        <div className="flex-1 bg-purple-700 rounded-2xl p-6 text-yellow-300 shadow-lg flex flex-col items-center">
-          <div className="text-2xl font-bold mb-1">R{stats.totalGiven.toLocaleString()}</div>
-          <div className="text-lg">Total Given</div>
+    <section className="max-w-6xl mx-auto mt-8 md:mt-12 p-2 md:p-8 bg-white dark:bg-gray-900 rounded-2xl shadow-xl">
+      {/* Hero header and summary cards (MemberDashboard style) */}
+      <div className="mb-10">
+        {/* Hero Card */}
+        <div className="relative overflow-hidden rounded-2xl p-6 md:p-8 mb-6 bg-gradient-to-r from-purple-100 via-indigo-100 to-yellow-100 dark:from-purple-900 dark:via-indigo-900 dark:to-gray-900 shadow flex flex-col md:flex-row items-center gap-4">
+          <div className="flex-shrink-0 flex items-center justify-center w-20 h-20 rounded-full bg-purple-200 dark:bg-purple-800 shadow-md">
+            <FaChurch className="text-4xl text-purple-600 dark:text-purple-200" />
+          </div>
+          <div className="flex-1 text-center md:text-left">
+            <div className="text-2xl md:text-3xl font-extrabold text-purple-800 dark:text-purple-200 mb-1">
+              Welcome, {CHURCH_NAME}
+            </div>
+            <div className="text-md md:text-lg text-gray-700 dark:text-gray-300 font-medium">
+              Track your church giving and projects at a glance
+            </div>
+          </div>
         </div>
-        <div className="flex-1 bg-yellow-300 rounded-2xl p-6 text-purple-800 shadow-lg flex flex-col items-center">
-          <div className="text-2xl font-bold mb-1">{stats.numDonors}</div>
-          <div className="text-lg">Donors</div>
-        </div>
-        <div className="flex-1 bg-white rounded-2xl p-6 text-purple-700 shadow-lg flex flex-col items-center border border-purple-100">
-          <div className="text-2xl font-bold mb-1">{stats.totalProjects}</div>
-          <div className="text-lg">Projects</div>
+        {/* Summary Cards Row */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="rounded-2xl p-5 shadow bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900 dark:to-gray-900 flex flex-col items-start">
+            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-purple-200 dark:bg-purple-700 mb-3">
+              <FaMoneyBillWave className="text-2xl text-purple-700 dark:text-yellow-200" />
+            </div>
+            <div className="text-2xl font-extrabold text-purple-800 dark:text-purple-100">
+              R{stats.totalGiven.toLocaleString()}
+            </div>
+            <div className="text-xs text-gray-600 dark:text-gray-300 font-semibold mt-1">Total Given</div>
+          </div>
+          <div className="rounded-2xl p-5 shadow bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900 dark:to-gray-900 flex flex-col items-start">
+            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-yellow-200 dark:bg-yellow-700 mb-3">
+              <FaUsers className="text-2xl text-yellow-600 dark:text-yellow-100" />
+            </div>
+            <div className="text-2xl font-extrabold text-yellow-700 dark:text-yellow-100">
+              {stats.numDonors}
+            </div>
+            <div className="text-xs text-gray-600 dark:text-gray-300 font-semibold mt-1">Donors</div>
+          </div>
+          <div className="rounded-2xl p-5 shadow bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900 dark:to-gray-900 flex flex-col items-start">
+            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-indigo-200 dark:bg-indigo-700 mb-3">
+              <FaProjectDiagram className="text-2xl text-indigo-700 dark:text-indigo-100" />
+            </div>
+            <div className="text-2xl font-extrabold text-indigo-700 dark:text-indigo-100">
+              {stats.totalProjects}
+            </div>
+            <div className="text-xs text-gray-600 dark:text-gray-300 font-semibold mt-1">Projects</div>
+          </div>
         </div>
       </div>
 
-      {/* Church Payout Requests */}
+      {/* Top actions */}
+      <div className="flex flex-col md:flex-row md:items-center gap-3 mb-6">
+        <button
+          className="flex items-center gap-2 bg-purple-700 hover:bg-purple-800 text-yellow-300 font-bold px-4 py-2 rounded-xl shadow transition"
+          onClick={downloadCSV}
+        >
+          <FaDownload /> CSV
+        </button>
+        <button
+          className="flex items-center gap-2 bg-purple-700 hover:bg-purple-800 text-yellow-300 font-bold px-4 py-2 rounded-xl shadow transition"
+          onClick={downloadPDF}
+        >
+          <FaDownload /> PDF
+        </button>
+        <button
+          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold px-4 py-2 rounded-xl shadow transition"
+          onClick={() => setShowForm(true)}
+        >
+          + Project
+        </button>
+      </div>
+
+      {/* Payouts */}
       <div className="my-10">
         <PayoutRequestForm token={userToken} />
         <MyPayouts token={userToken} />
       </div>
 
       {/* Chart */}
-      <div className="bg-white rounded-2xl p-6 mb-10 shadow-xl">
-        <div className="text-lg text-purple-700 mb-3 font-bold">Top Projects</div>
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 mb-10 shadow-xl">
+        <div className="flex items-center gap-2 text-lg text-purple-700 dark:text-purple-300 mb-3 font-bold">
+          <FaRegCalendarCheck /> Top Projects
+        </div>
         <Bar data={barData} options={{ responsive: true, plugins: { legend: { display: false } } }} height={70} />
-      </div>
-
-      {/* Quick Actions */}
-      <div className="flex flex-col md:flex-row gap-4 mb-8">
-        <button
-          className="bg-purple-700 text-yellow-300 font-bold px-5 py-2 rounded-xl shadow hover:bg-purple-800 transition w-full md:w-auto"
-          onClick={() => setShowForm(true)}
-        >
-          + New Project
-        </button>
-        <button
-          className="bg-purple-50 text-purple-700 font-bold px-5 py-2 rounded-xl shadow border border-purple-200 hover:bg-purple-100 transition w-full md:w-auto"
-          onClick={downloadCSV}
-        >
-          Download CSV
-        </button>
-        <button
-          className="bg-purple-50 text-purple-700 font-bold px-5 py-2 rounded-xl shadow border border-purple-200 hover:bg-purple-100 transition w-full md:w-auto"
-          onClick={downloadPDF}
-        >
-          Download PDF
-        </button>
       </div>
 
       {/* Create Project Form */}
       {showForm && (
         <form
-          className="mb-10 p-6 bg-purple-50 rounded-xl shadow-lg max-w-md mx-auto"
+          className="mb-10 p-6 bg-purple-50 dark:bg-gray-800 rounded-xl shadow-lg max-w-md mx-auto"
           onSubmit={handleProjectSubmit}
         >
           <div className="mb-4">
-            <label className="block mb-1 font-semibold text-purple-800">Project Title</label>
+            <label className="block mb-1 font-semibold text-purple-800 dark:text-purple-200">Project Title</label>
             <input
               type="text"
               name="title"
@@ -210,7 +240,7 @@ export default function ChurchDashboard() {
             />
           </div>
           <div className="mb-4">
-            <label className="block mb-1 font-semibold text-purple-800">Goal Amount (ZAR)</label>
+            <label className="block mb-1 font-semibold text-purple-800 dark:text-purple-200">Goal Amount (ZAR)</label>
             <input
               type="number"
               name="goal"
@@ -227,7 +257,7 @@ export default function ChurchDashboard() {
           </button>
           <button
             type="button"
-            className="mt-4 bg-gray-300 text-purple-700 px-6 py-2 rounded shadow w-full"
+            className="mt-4 bg-gray-300 dark:bg-gray-700 text-purple-700 dark:text-purple-200 px-6 py-2 rounded shadow w-full"
             onClick={() => setShowForm(false)}
           >
             Cancel
@@ -236,9 +266,11 @@ export default function ChurchDashboard() {
       )}
 
       {/* Project List */}
-      <h3 className="text-xl font-semibold text-purple-700 mb-4 mt-8">Projects</h3>
+      <h3 className="text-xl font-semibold text-purple-700 dark:text-purple-300 mb-4 mt-8 flex items-center gap-2">
+        <FaProjectDiagram /> Projects
+      </h3>
       <div className="overflow-x-auto">
-        <table className="min-w-full bg-white border rounded-xl">
+        <table className="min-w-full bg-white dark:bg-gray-900 border rounded-xl">
           <thead>
             <tr>
               <th className="py-2 px-4 border-b text-left">Title</th>
@@ -254,16 +286,18 @@ export default function ChurchDashboard() {
               <tr key={i}>
                 <td className="py-2 px-4 border-b">{p.title}</td>
                 <td className="py-2 px-4 border-b">R{p.goal.toLocaleString()}</td>
-                <td className="py-2 px-4 border-b text-purple-800 font-bold">
+                <td className="py-2 px-4 border-b text-purple-800 dark:text-purple-200 font-bold">
                   R{donations.filter(d => d.project === p.title).reduce((sum, d) => sum + Number(d.amount), 0).toLocaleString()}
                 </td>
                 <td className={`py-2 px-4 border-b font-semibold ${
                   p.status === "Pending"
                     ? "text-yellow-500"
                     : p.status === "Active"
-                    ? "text-green-600"
-                    : "text-red-500"
-                }`}>
+                    ? "text-green-600 dark:text-green-300"
+                    : "text-red-500 dark:text-red-400"
+                } flex items-center gap-1`}>
+                  {p.status === "Active" && <FaCheckCircle />}
+                  {p.status === "Rejected" && <FaTimesCircle />}
                   {p.status}
                 </td>
                 <td className="py-2 px-4 border-b">{p.created}</td>
@@ -289,7 +323,7 @@ export default function ChurchDashboard() {
             ))}
             {projects.length === 0 && (
               <tr>
-                <td colSpan={6} className="py-8 text-center text-purple-700">
+                <td colSpan={6} className="py-8 text-center text-purple-700 dark:text-purple-300">
                   No projects found.
                 </td>
               </tr>
@@ -299,9 +333,11 @@ export default function ChurchDashboard() {
       </div>
 
       {/* Donations Table */}
-      <h3 className="text-xl font-semibold text-purple-700 mb-4 mt-10">Donations</h3>
+      <h3 className="text-xl font-semibold text-purple-700 dark:text-purple-300 mb-4 mt-10 flex items-center gap-2">
+        <FaMoneyBillWave /> Donations
+      </h3>
       <div className="overflow-x-auto">
-        <table className="min-w-full bg-white border rounded-xl">
+        <table className="min-w-full bg-white dark:bg-gray-900 border rounded-xl">
           <thead>
             <tr>
               <th className="py-2 px-4 border-b text-left">Date</th>
@@ -323,7 +359,7 @@ export default function ChurchDashboard() {
             ))}
             {donations.length === 0 && (
               <tr>
-                <td colSpan={5} className="py-8 text-center text-purple-700">
+                <td colSpan={5} className="py-8 text-center text-purple-700 dark:text-purple-300">
                   No donations found.
                 </td>
               </tr>

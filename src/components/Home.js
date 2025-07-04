@@ -1,3 +1,5 @@
+import { FaUserPlus, FaRocket, FaCreditCard } from "react-icons/fa";
+
 function Home() {
   return (
     <div className="w-full min-h-screen bg-white flex items-center justify-center py-10">
@@ -29,17 +31,17 @@ function Home() {
           <h2 className="text-2xl font-bold text-yellow-300 mb-7 text-center drop-shadow">How It Works</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-white rounded-2xl shadow-lg p-6 flex flex-col items-center transition-transform hover:-translate-y-1 hover:scale-105 duration-200">
-              <div className="text-4xl mb-3">📝</div>
+              <FaUserPlus className="text-4xl text-purple-800 mb-3" />
               <div className="font-bold text-lg text-purple-800 mb-2">Sign Up</div>
               <p className="text-purple-700 text-center">Join as a member or church in minutes.</p>
             </div>
             <div className="bg-white rounded-2xl shadow-lg p-6 flex flex-col items-center transition-transform hover:-translate-y-1 hover:scale-105 duration-200">
-              <div className="text-4xl mb-3">🚀</div>
+              <FaRocket className="text-4xl text-purple-800 mb-3" />
               <div className="font-bold text-lg text-purple-800 mb-2">Launch Projects</div>
               <p className="text-purple-700 text-center">Churches add tithes, offerings, or special projects.</p>
             </div>
             <div className="bg-white rounded-2xl shadow-lg p-6 flex flex-col items-center transition-transform hover:-translate-y-1 hover:scale-105 duration-200">
-              <div className="text-4xl mb-3">💳</div>
+              <FaCreditCard className="text-4xl text-purple-800 mb-3" />
               <div className="font-bold text-lg text-purple-800 mb-2">Give Instantly</div>
               <p className="text-purple-700 text-center">Members give with card or mobile, with digital receipts!</p>
             </div>

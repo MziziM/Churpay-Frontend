@@ -3,8 +3,7 @@ import axios from "axios";
 
 const roles = [
   { key: "member", label: "Member", desc: "Give, track donations, support projects" },
-  { key: "church", label: "Church", desc: "Create projects, receive support, manage your profile" },
-  { key: "admin", label: "Admin", desc: "Platform management (invite only)" }
+  { key: "church", label: "Church", desc: "Create projects, receive support, manage your profile" }
 ];
 
 export default function Signup() {
@@ -55,7 +54,7 @@ export default function Signup() {
           church_id: selectedChurchId,
         };
       } else {
-        setMsg("Admin accounts are invite-only. Please contact the platform owner.");
+        setMsg("Please select a role to register.");
         setLoading(false);
         return;
       }
@@ -194,35 +193,6 @@ export default function Signup() {
                   className="w-full border-2 border-purple-100 dark:border-purple-700 rounded-xl px-5 py-3 text-lg focus:border-purple-400 outline-none dark:bg-gray-800 dark:text-yellow-100"
                   required
                   onChange={handleChange}
-                />
-              </>
-            )}
-            {role === "admin" && (
-              <>
-                <input
-                  type="text"
-                  name="admin_name"
-                  placeholder="Admin Name"
-                  className="w-full border-2 border-purple-100 dark:border-purple-700 rounded-xl px-5 py-3 text-lg focus:border-purple-400 outline-none dark:bg-gray-800 dark:text-yellow-100"
-                  required
-                  onChange={handleChange}
-                />
-                <input
-                  type="email"
-                  name="admin_email"
-                  placeholder="Admin Email"
-                  className="w-full border-2 border-purple-100 dark:border-purple-700 rounded-xl px-5 py-3 text-lg focus:border-purple-400 outline-none dark:bg-gray-800 dark:text-yellow-100"
-                  required
-                  onChange={handleChange}
-                />
-                <input
-                  type="password"
-                  name="password"
-                  placeholder="Password"
-                  className="w-full border-2 border-purple-100 dark:border-purple-700 rounded-xl px-5 py-3 text-lg focus:border-purple-400 outline-none dark:bg-gray-800 dark:text-yellow-100"
-                  required
-                  onChange={handleChange}
-                  autoComplete="new-password"
                 />
               </>
             )}

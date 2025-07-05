@@ -3,7 +3,8 @@ import axios from "axios";
 
 const roles = [
   { key: "member", label: "Member", desc: "Give, track donations, support projects" },
-  { key: "church", label: "Church", desc: "Create projects, receive support, manage your profile" }
+  { key: "church", label: "Church", desc: "Create projects, receive support, manage your profile" },
+  { key: "admin", label: "Admin", desc: "Platform management (invite only)" }
 ];
 
 export default function Signup() {
@@ -28,44 +29,55 @@ export default function Signup() {
   }
 
   async function handleSubmit(e) {
-    e.preventDefault();
-    setLoading(true);
-    setMsg("");
-    try {
-      let data;
-      let endpoint;
-      if (role === "church") {
-        endpoint = "https://churpay-backend.onrender.com/api/register";
-        data = {
-          church_name: form.church_name,
-          email: form.email,
-          password: form.password,
-          lead_pastor: form.lead_pastor,
-          contact_person: form.contact_person,
-          role,
-        };
-      } else if (role === "member") {
-        endpoint = "https://churpay-backend.onrender.com/api/register";
-        data = {
-          name: form.name,
-          email: form.email,
-          password: form.password,
-          role,
-          church_id: selectedChurchId,
-        };
-      } else {
-        setMsg("Please select a role to register.");
-        setLoading(false);
-        return;
-      }
-
-      await axios.post(endpoint, data);
-      setMsg("Signup successful! You can now log in.");
-    } catch (err) {
-      setMsg("Registration failed: " + (err.response?.data?.msg || "Check your details and try again."));
+  e.preventDefault();
+  setLoading(true);
+  setMsg("");
+  try {
+    let data;
+    let endpoint;
+    if (role === "church") {
+      endpoint = "https://churpay-backend.onrender.com/api/register";
+      data = {
+        church_name: form.church_name,
+        email: form.email,
+        password: form.password,
+        lead_pastor: form.lead_pastor,
+        contact_person: form.contact_person,
+        role,
+      };
+    } else if (role === "member") {
+      endpoint = "https://churpay-backend.onrender.com/api/register";
+      data = {
+        name: form.name,
+        email: form.email,
+        password: form.password,
+        role,
+        church_id: selectedChurchId,
+      };
+    } else if (role === "admin") {
+      endpoint = "https://churpay-backend.onrender.com/api/admin-register";
+      data = {
+        admin_name: form.admin_name,
+        admin_email: form.admin_email,
+        password: form.password,
+        role,
+      };
+    } else {
+      setMsg("Invalid role.");
+      setLoading(false);
+      return;
     }
-    setLoading(false);
+
+    const res = await axios.post(endpoint, data);
+    setMsg("Signup successful! You can now log in.");
+    if (role === "admin" && res.status === 201) {
+      window.location.href = "/admin/dashboard";
+    }
+  } catch (err) {
+    setMsg("Registration failed: " + (err.response?.data?.msg || "Check your details and try again."));
   }
+  setLoading(false);
+}
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-700 to-indigo-500 dark:from-purple-900 dark:to-gray-900 py-8 px-2">
@@ -193,6 +205,35 @@ export default function Signup() {
                   className="w-full border-2 border-purple-100 dark:border-purple-700 rounded-xl px-5 py-3 text-lg focus:border-purple-400 outline-none dark:bg-gray-800 dark:text-yellow-100"
                   required
                   onChange={handleChange}
+                />
+              </>
+            )}
+            {role === "admin" && (
+              <>
+                <input
+                  type="text"
+                  name="admin_name"
+                  placeholder="Admin Name"
+                  className="w-full border-2 border-purple-100 dark:border-purple-700 rounded-xl px-5 py-3 text-lg focus:border-purple-400 outline-none dark:bg-gray-800 dark:text-yellow-100"
+                  required
+                  onChange={handleChange}
+                />
+                <input
+                  type="email"
+                  name="admin_email"
+                  placeholder="Admin Email"
+                  className="w-full border-2 border-purple-100 dark:border-purple-700 rounded-xl px-5 py-3 text-lg focus:border-purple-400 outline-none dark:bg-gray-800 dark:text-yellow-100"
+                  required
+                  onChange={handleChange}
+                />
+                <input
+                  type="password"
+                  name="password"
+                  placeholder="Password"
+                  className="w-full border-2 border-purple-100 dark:border-purple-700 rounded-xl px-5 py-3 text-lg focus:border-purple-400 outline-none dark:bg-gray-800 dark:text-yellow-100"
+                  required
+                  onChange={handleChange}
+                  autoComplete="new-password"
                 />
               </>
             )}

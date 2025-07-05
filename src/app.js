@@ -31,8 +31,6 @@ import ChurchList from "./components/ChurchList";
 import ChurchProfile from "./components/ChurchProfile";
 import ChurchEditForm from "./components/ChurchEditForm";
 import AddChurchForm from "./components/AddChurchForm";
-import AdminSignup from "./components/AdminSignup";
-
 
 function App() {
   return (
@@ -78,9 +76,8 @@ function App() {
             <Route path="/churches/:id/edit" element={<ChurchEditForm />} />
             <Route path="/add-church" element={<AddChurchForm />} />
             {/* 404 */}
-            <Route path="/admin-signup" element={<AdminSignup />} />
             <Route
-
+              path="*"
               element={
                 <div className="p-8 text-2xl text-red-500 text-center">
                   404 Not Found – That page doesn’t exist, poi!<br />

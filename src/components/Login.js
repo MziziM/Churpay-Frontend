@@ -150,10 +150,3 @@ export default function Login() {
     </div>
   );
 }
-<<<<<<< HEAD
-        
-=======
-
-
-
->>>>>>> c429ac8 (Add axios to frontend dependencies)

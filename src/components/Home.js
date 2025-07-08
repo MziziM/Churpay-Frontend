@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-// This file is intentionally left blank. The component has been moved to churpay-frontend/src/components/Home.js.
-=======
-
 import { FaUserPlus, FaRocket, FaCreditCard, FaHandsHelping, FaChurch, FaUsers } from "react-icons/fa";
 
 function Home() {
@@ -98,4 +94,3 @@ function Home() {
 }
 
 export default Home;
->>>>>>> c429ac8 (Add axios to frontend dependencies)

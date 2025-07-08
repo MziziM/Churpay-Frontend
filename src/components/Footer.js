@@ -1,10 +1,3 @@
-<<<<<<< HEAD
-export default function Footer() {
-  return (
-    <footer className="bg-purple-900 text-white text-center py-6 mt-auto">
-      <div className="text-lg font-semibold">ChurPay &copy; {new Date().getFullYear()} | Built for the Faith Community</div>
-=======
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { FaTwitter, FaFacebook, FaInstagram, FaYoutube, FaEnvelope, FaPhone } from 'react-icons/fa';
@@ -130,8 +123,6 @@ export default function Footer() {
           </div>
         </div>
       </div>
-
->>>>>>> c429ac8 (Add axios to frontend dependencies)
     </footer>
   );
 }

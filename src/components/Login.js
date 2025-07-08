@@ -1,151 +1,122 @@
-import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { authAPI } from "../api";
+import { useState } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("member");
   const [msg, setMsg] = useState("");
+  const [role, setRole] = useState("church");
   const navigate = useNavigate();
 
   async function handleSubmit(e) {
     e.preventDefault();
     setMsg("");
     try {
-      const res = await authAPI.login(email, password);
-      const { token, role, name } = res.data;
-      localStorage.setItem("churpay_token", token);
-      localStorage.setItem("churpay_role", role);
-      localStorage.setItem("churpay_name", name || email);
+      const res = await axios.post("/api/login", { email, password, role });
       setMsg("Login successful! Redirecting...");
-      setTimeout(() => {
-        if (role === "admin") navigate("/admin_dashboard");
-        else if (role === "church") navigate("/church_dashboard");
-        else navigate("/memberdashboard");
-      }, 1200);
+      localStorage.setItem("churpay_token", res.data.token);
+      localStorage.setItem("churpay_role", role);
+      if (role === "church") {
+        setTimeout(() => navigate("/dashboard"), 1000);
+      } else {
+        setTimeout(() => navigate("/member"), 1000);
+      }
     } catch (err) {
       setMsg(err.response?.data?.message || "Login failed.");
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-800 to-indigo-600 dark:from-purple-900 dark:to-gray-900 py-8 px-2">
-      <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl p-10 max-w-xl w-full flex flex-col items-center border-t-4 border-yellow-300">
-        <div className="relative mb-8 w-full flex justify-center">
-          <img
-            src="/churpay_logo2.png"
-            alt="ChurPay Logo"
-            className="h-16 md:h-24"
-            style={{ objectFit: "contain" }}
-          />
-          <div className="absolute -bottom-2 w-24 h-1 bg-yellow-300 rounded-full"></div>
+    <div className="min-h-screen bg-gradient-to-br from-purple-800 to-indigo-900 flex items-center justify-center px-4">
+      <div className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl border-t-4 border-yellow-400 p-16">
+        <div className="flex flex-col items-center mb-6">
+          <img src="/logo.png" alt="ChurPay Logo" className="h-12 mb-2" />
+          <div className="h-1 w-16 bg-yellow-400 rounded-full mb-4"></div>
         </div>
-        <h1 className="text-4xl md:text-5xl font-extrabold text-purple-700 dark:text-yellow-300 mb-3 text-center">
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-indigo-600 dark:from-yellow-300 dark:to-yellow-400">
-            Sign In to ChurPay
-          </span>
-        </h1>
-        <div className="mb-8 text-purple-600 dark:text-yellow-100 text-center text-lg md:text-xl max-w-md">
+        <h2 className="text-4xl font-bold text-center text-purple-800 mb-2">Sign In to ChurPay</h2>
+        <p className="text-center text-lg text-purple-500 mb-6">
           Welcome back! Please enter your login details below.
+        </p>
+        {/* Role Selector */}
+        <div className="flex justify-center mb-4 gap-2">
+          <button
+            type="button"
+            onClick={() => setRole("church")}
+            className={`px-6 py-3 rounded-l-full border border-purple-400 font-semibold transition ${
+              role === "church"
+                ? "bg-gradient-to-r from-purple-700 to-indigo-600 text-white"
+                : "bg-white text-purple-700"
+            }`}
+          >
+            Church
+          </button>
+          <button
+            type="button"
+            onClick={() => setRole("member")}
+            className={`px-6 py-3 rounded-r-full border border-purple-400 font-semibold transition ${
+              role === "member"
+                ? "bg-gradient-to-r from-purple-700 to-indigo-600 text-white"
+                : "bg-white text-purple-700"
+            }`}
+          >
+            Member
+          </button>
         </div>
-        <form
-          className="w-full flex flex-col items-center"
-          onSubmit={handleLogin}
-        >
-          <div className="relative w-full mb-5">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2">
+              {/* Filled email icon */}
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="#a78bfa">
+                <rect width="24" height="24" rx="4" fill="#a78bfa" opacity="0.12"/>
+                <path d="M2.25 6.75A2.25 2.25 0 0 1 4.5 4.5h15a2.25 2.25 0 0 1 2.25 2.25v10.5A2.25 2.25 0 0 1 19.5 19.5h-15A2.25 2.25 0 0 1 2.25 17.25V6.75zm1.5 0v.511l8.25 5.5 8.25-5.5V6.75a.75.75 0 0 0-.75-.75h-15a.75.75 0 0 0-.75.75zm17.25 1.489-7.728 5.156a1.25 1.25 0 0 1-1.444 0L3.75 8.239v9.011c0 .414.336.75.75.75h15a.75.75 0 0 0 .75-.75V8.239z" fill="#a78bfa"/>
+              </svg>
+            </span>
             <input
-              className="w-full border-2 border-purple-100 dark:border-purple-700 rounded-xl pl-10 pr-5 py-4 text-lg focus:border-purple-500 outline-none transition-all dark:bg-gray-800 dark:text-yellow-100 shadow-sm hover:shadow-md focus:shadow-md"
-              placeholder="Email"
               type="email"
-              autoFocus
+              placeholder="Email"
               value={email}
               onChange={e => setEmail(e.target.value)}
               required
+              className="w-full border border-gray-300 rounded-lg px-12 py-4 focus:outline-none focus:ring-2 focus:ring-purple-400 transition text-lg"
             />
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none opacity-70">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-purple-400" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
-                <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
-              </svg>
-            </div>
           </div>
-          <div className="relative w-full mb-6">
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2">
+              {/* Filled lock icon */}
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="#a78bfa">
+                <rect width="24" height="24" rx="4" fill="#a78bfa" opacity="0.12"/>
+                <path d="M10 2a4 4 0 00-4 4v2H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-1V6a4 4 0 00-4-4zm-2 6V6a2 2 0 114 0v2H8z" fill="#a78bfa"/>
+              </svg>
+            </span>
             <input
-              className="w-full border-2 border-purple-100 dark:border-purple-700 rounded-xl pl-10 pr-5 py-4 text-lg focus:border-purple-500 outline-none transition-all dark:bg-gray-800 dark:text-yellow-100 shadow-sm hover:shadow-md focus:shadow-md"
-              placeholder="Password"
               type="password"
+              placeholder="Password"
               value={password}
               onChange={e => setPassword(e.target.value)}
               required
+              className="w-full border border-gray-300 rounded-lg px-12 py-4 focus:outline-none focus:ring-2 focus:ring-purple-400 transition text-lg"
             />
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none opacity-70">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-purple-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-              </svg>
-            </div>
           </div>
-          <div className="w-full flex justify-end mb-2">
-            <Link to="/forgot-password" className="text-sm text-purple-600 dark:text-yellow-200 hover:text-purple-800 dark:hover:text-yellow-300 transition-colors">
-              Forgot your password?
-            </Link>
+          <div className="text-right text-sm text-purple-600 hover:underline cursor-pointer">
+            Forgot your password?
           </div>
           <button
-            className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-yellow-300 font-bold py-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl text-lg tracking-wide mt-3 transform hover:translate-y-[-1px] active:translate-y-[1px]"
             type="submit"
-            disabled={loading}
+            className="w-full bg-gradient-to-r from-purple-700 to-indigo-600 hover:from-purple-800 hover:to-indigo-700 text-yellow-300 font-bold py-4 rounded-xl shadow-md transition text-xl"
           >
-            {loading ? (
-              <div className="flex items-center justify-center">
-                <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-yellow-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Logging in...
-              </div>
-            ) : "Sign In"}
+            Sign In
           </button>
-          {msg && (
-            <div className={`mt-6 text-center font-medium ${msg.includes("success") ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-yellow-200"} p-4 rounded-xl ${msg.includes("success") ? "bg-green-50 dark:bg-green-900 dark:bg-opacity-20" : "bg-red-50 dark:bg-red-900 dark:bg-opacity-20"} border ${msg.includes("success") ? "border-green-200 dark:border-green-900" : "border-red-200 dark:border-red-900"}`}>
-              {msg.includes("success") ? (
-                <div className="flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-green-600 dark:text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                  {msg}
-                </div>
-              ) : (
-                <div className="flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-red-600 dark:text-yellow-200" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
-                  {msg}
-                </div>
-              )}
-              {msg.includes("success") && (
-                <div className="mt-3 text-sm text-green-500 dark:text-green-300 flex items-center justify-center">
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Redirecting you...
-                </div>
-              )}
-            </div>
-          )}
-          <div className="mt-6 text-center">
-            <span className="text-purple-600 dark:text-yellow-200">New here?</span>{" "}
-            <Link
-              to="/signup"
-              className="text-purple-700 dark:text-yellow-300 hover:underline font-bold inline-flex items-center group"
-            >
-              Create your account
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
-              </svg>
-            </Link>
-          </div>
         </form>
+        <div className="mt-6 text-center text-md text-gray-600">
+          New here?{" "}
+          <a href="/signup" className="text-purple-700 font-semibold hover:underline">
+            Create your account →
+          </a>
+        </div>
+        {msg && (
+          <div className="mt-6 text-center text-md text-purple-800 font-semibold">{msg}</div>
+        )}
       </div>
     </div>
   );

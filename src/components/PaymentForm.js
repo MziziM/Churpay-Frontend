@@ -15,7 +15,7 @@ export default function PaymentForm({ onSubmit }) {
       return;
     }
     try {
-      await axios.post("http://localhost:5000/api/transactions", {
+      await axios.post("/api/transactions", {
         token,
         date: new Date().toISOString().slice(0, 10),
         name: type,

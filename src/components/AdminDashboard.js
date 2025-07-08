@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import AdminSidebar from "./AdminSidebar";
 import AdminAuthNavbar from "./AdminAuthNavbar";
 import {
   FaUsers,
@@ -22,6 +23,11 @@ import toast, { Toaster } from 'react-hot-toast';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
+  // New states for dashboard counts
+  const [churches, setChurches] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [members, setMembers] = useState([]);
+  const [donations, setDonations] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -35,9 +41,6 @@ export default function AdminDashboard() {
   // Section state for dashboard navigation
   const [section, setSection] = useState('dashboard');
   const [showDashboard, setShowDashboard] = useState(true);
-  const [churches, setChurches] = useState([]);
-  const [members, setMembers] = useState([]);
-  const [projects, setProjects] = useState([]);
   const [churchesLoading, setChurchesLoading] = useState(false);
   const [membersLoading, setMembersLoading] = useState(false);
   const [projectsLoading, setProjectsLoading] = useState(false);
@@ -63,34 +66,62 @@ export default function AdminDashboard() {
   const [formError, setFormError] = useState(null);
   const [formSuccess, setFormSuccess] = useState(null);
 
-  useEffect(() => {
-    setLoading(true);
-    const token = localStorage.getItem("adminToken");
-    axios.get("https://churpay-backend.onrender.com/api/admin/stats", {
-      headers: token ? { Authorization: `Bearer ${token}` } : {}
+  // Fetch dashboard data on mount (counts)
+ useEffect(() => {
+  async function fetchData() {
+    try {
+      setLoading(true);
+      const [
+        churchesRes,
+        projectsRes,
+        membersRes,
+        donationsRes
+      ] = await Promise.all([
+        axios.get("https://churpay-backend.onrender.com/api/churches"),
+        axios.get("https://churpay-backend.onrender.com/api/projects"),
+        axios.get("https://churpay-backend.onrender.com/api/members"),
+        axios.get("https://churpay-backend.onrender.com/api/donations")
+      ]);
+      setChurches(Array.isArray(churchesRes.data) ? churchesRes.data : (Array.isArray(churchesRes.data.churches) ? churchesRes.data.churches : []));
+      setProjects(Array.isArray(projectsRes.data) ? projectsRes.data : (Array.isArray(projectsRes.data.projects) ? projectsRes.data.projects : []));
+      setMembers(Array.isArray(membersRes.data) ? membersRes.data : (Array.isArray(membersRes.data.members) ? membersRes.data.members : []));
+      setDonations(Array.isArray(donationsRes.data) ? donationsRes.data : (Array.isArray(donationsRes.data.donations) ? donationsRes.data.donations : []));
+      setLoading(false);
+    } catch (err) {
+      setError("Admin dashboard data fetch failed");
+      setLoading(false);
+      console.error("Admin dashboard data fetch failed:", err);
+    }
+  }
+  fetchData();
+  // ... keep the rest as is
+}, []);
+
+// Separate useEffect for payouts and stats
+useEffect(() => {
+  const token = localStorage.getItem("adminToken");
+  axios.get("https://churpay-backend.onrender.com/api/admin/stats", {
+    headers: token ? { Authorization: `Bearer ${token}` } : {}
+  })
+    .then(res => {
+      setStats(res.data);
     })
-      .then(res => {
-        setStats(res.data);
-        setLoading(false);
-      })
-      .catch(() => {
-        setError("Could not load admin stats");
-        setLoading(false);
-      });
-    // Fetch payout requests
-    setPayoutLoading(true);
-    axios.get("https://churpay-backend.onrender.com/api/admin/payout-requests", {
-      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    .catch(() => {
+      // Do not overwrite error if already set
+    });
+  setPayoutLoading(true);
+  axios.get("https://churpay-backend.onrender.com/api/admin/payout-requests", {
+    headers: token ? { Authorization: `Bearer ${token}` } : {}
+  })
+    .then(res => {
+      setPayoutRequests(res.data);
+      setPayoutLoading(false);
     })
-      .then(res => {
-        setPayoutRequests(res.data);
-        setPayoutLoading(false);
-      })
-      .catch(() => {
-        setPayoutError("Could not load payout requests");
-        setPayoutLoading(false);
-      });
-  }, []);
+    .catch(() => {
+      setPayoutError("Could not load payout requests");
+      setPayoutLoading(false);
+    });
+}, []);
 
   // Approve/Deny payout request handler
   const handlePayoutAction = async (id, action) => {
@@ -121,7 +152,7 @@ export default function AdminDashboard() {
   };
   const handleBack = () => setShowDashboard(true);
 
-  // Fetch churches and members when their section is selected
+  // Fetch churches, members, and projects when their section is selected
   useEffect(() => {
     const token = localStorage.getItem("adminToken");
     if (section === 'churches') {
@@ -131,7 +162,7 @@ export default function AdminDashboard() {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       })
         .then(res => {
-          setChurches(res.data);
+          setChurches(Array.isArray(res.data) ? res.data : (Array.isArray(res.data.churches) ? res.data.churches : []));
           setChurchesLoading(false);
         })
         .catch(() => {
@@ -146,7 +177,7 @@ export default function AdminDashboard() {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       })
         .then(res => {
-          setMembers(res.data);
+          setMembers(Array.isArray(res.data) ? res.data : (Array.isArray(res.data.members) ? res.data.members : []));
           setMembersLoading(false);
         })
         .catch(() => {
@@ -161,7 +192,7 @@ export default function AdminDashboard() {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       })
         .then(res => {
-          setProjects(res.data);
+          setProjects(Array.isArray(res.data) ? res.data : (Array.isArray(res.data.projects) ? res.data.projects : []));
           setProjectsLoading(false);
         })
         .catch(() => {
@@ -251,8 +282,8 @@ export default function AdminDashboard() {
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen text-xl text-purple-700">Loading...</div>;
   }
-  if (error || !stats) {
-    return <div className="flex items-center justify-center min-h-screen text-xl text-red-600">{error || "No stats available"}</div>;
+  if (error) {
+    return <div className="flex items-center justify-center min-h-screen text-xl text-red-600">{error}</div>;
   }
 
   return (
@@ -274,35 +305,51 @@ export default function AdminDashboard() {
                 </div>
               </div>
             </div>
-            {/* Summary Cards Row (clickable) */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">
-              <SummaryCard
-                icon={<FaChurch className="text-2xl text-purple-500 mb-2" />}
-                value={stats.churches}
-                label="Churches"
-                borderColor="border-purple-400 dark:border-purple-600"
-                valueClass="text-purple-800 dark:text-purple-200"
-                onClick={() => handleSection('churches')}
+            {/* Dashboard Counts (Styled like AdminCard grid) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+              <AdminCard
+                icon={<FaChurch className="text-2xl text-purple-500" />}
+                label={
+                  <div className="flex flex-col">
+                    <span className="font-extrabold text-3xl text-gray-900 dark:text-white mb-1">{churches.length}</span>
+                    <span className="font-bold text-base text-gray-700 dark:text-gray-200">Churches</span>
+                  </div>
+                }
+                desc={<span className="text-xs text-gray-500 dark:text-gray-400">Total churches</span>}
               />
-              <SummaryCard
-                icon={<FaUsers className="text-2xl text-green-500 mb-2" />}
-                value={stats.members}
-                label="Members"
-                borderColor="border-green-400 dark:border-green-600"
-                valueClass="text-green-800 dark:text-green-200"
-                onClick={() => handleSection('members')}
+              <AdminCard
+                icon={<FaUsers className="text-2xl text-green-500" />}
+                label={
+                  <div className="flex flex-col">
+                    <span className="font-extrabold text-3xl text-gray-900 dark:text-white mb-1">{members.length}</span>
+                    <span className="font-bold text-base text-gray-700 dark:text-gray-200">Members</span>
+                  </div>
+                }
+                desc={<span className="text-xs text-gray-500 dark:text-gray-400">Total members</span>}
               />
-              <SummaryCard
-                icon={<FaMoneyBillWave className="text-2xl text-yellow-500 mb-2" />}
-                value={`R${stats.totalRevenue}`}
-                label="Total Revenue"
-                borderColor="border-yellow-400 dark:border-yellow-500"
-                valueClass="text-yellow-700 dark:text-yellow-200"
-                onClick={() => handleSection('analytics')}
+              <AdminCard
+                icon={<FaProjectDiagram className="text-2xl text-blue-500" />}
+                label={
+                  <div className="flex flex-col">
+                    <span className="font-extrabold text-3xl text-gray-900 dark:text-white mb-1">{projects.length}</span>
+                    <span className="font-bold text-base text-gray-700 dark:text-gray-200">Projects</span>
+                  </div>
+                }
+                desc={<span className="text-xs text-gray-500 dark:text-gray-400">Total projects</span>}
+              />
+              <AdminCard
+                icon={<FaMoneyBillWave className="text-2xl text-yellow-500" />}
+                label={
+                  <div className="flex flex-col">
+                    <span className="font-extrabold text-3xl text-gray-900 dark:text-white mb-1">{donations.length}</span>
+                    <span className="font-bold text-base text-gray-700 dark:text-gray-200">Donations</span>
+                  </div>
+                }
+                desc={<span className="text-xs text-gray-500 dark:text-gray-400">Total donations</span>}
               />
             </div>
             {/* Main Navigation Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 mb-12">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 mb-12 mt-10">
               <AdminCard
                 icon={<FaChurch className="text-2xl text-purple-500" />}
                 label="Manage Churches"
@@ -382,14 +429,14 @@ export default function AdminDashboard() {
               <AnalyticsSection stats={stats} />
             )}
             {section === 'payouts' && (
-              <PayoutsSection
-                payoutRequests={payoutRequests}
-                loading={payoutLoading}
-                error={payoutError}
-                actionLoading={actionLoading}
-                actionError={actionError}
-                handlePayoutAction={handlePayoutAction}
-              />
+             <PayoutsSection
+  payoutRequests={Array.isArray(payoutRequests) ? payoutRequests : []}
+  loading={payoutLoading}
+  error={payoutError}
+  actionLoading={actionLoading}
+  actionError={actionError}
+  handlePayoutAction={handlePayoutAction}
+/>
             )}
             {section === 'projects' && (
               <ProjectsSection 
@@ -454,14 +501,66 @@ function AdminCard({ icon, label, desc, onClick }) {
 
 // Full-page Churches section with add form
 function ChurchesSection({ churches, loading, error, setChurches, handleViewDetails, handleEditChurch, viewChurch, editChurch, handleEditSubmit, form, handleChange, submitting: parentSubmitting, formError: parentFormError, formSuccess: parentFormSuccess, setEditChurch, setViewChurch }) {
+  // --- New state and handlers for manual add/approve/decline ---
+  const API_BASE = "https://churpay-backend.onrender.com/api";
+  const [newChurch, setNewChurch] = React.useState({ name: '', email: '' });
+  const [addChurchLoading, setAddChurchLoading] = React.useState(false);
+  const [addChurchError, setAddChurchError] = React.useState(null);
+  const [addChurchSuccess, setAddChurchSuccess] = React.useState(null);
+  // For search/filter
   const [showAddModal, setShowAddModal] = useState(false);
   const [search, setSearch] = useState('');
   const [submitting, setSubmitting] = useState(false); // Local state for add modal
   const [formError, setFormError] = useState(null);    // Local state for add modal
   const [formSuccess, setFormSuccess] = useState(null); // Local state for add modal
   const filteredChurches = churches.filter(church =>
-    church.church_name.toLowerCase().includes(search.toLowerCase())
+    (church.church_name || church.name || '').toLowerCase().includes(search.toLowerCase())
   );
+
+  // Handler to fetch churches (for manual add reload)
+  const fetchChurches = async () => {
+    try {
+      const token = localStorage.getItem("adminToken");
+      const res = await axios.get(`${API_BASE}/admin/churches`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+      setChurches(res.data);
+    } catch (err) {
+      // ignore
+    }
+  };
+
+  // Manual add handler
+  const handleAddChurch = async (e) => {
+    e.preventDefault();
+    setAddChurchLoading(true);
+    setAddChurchError(null);
+    setAddChurchSuccess(null);
+    try {
+      await axios.post(`${API_BASE}/admin/churches`, newChurch);
+      await fetchChurches();
+      setNewChurch({ name: '', email: '' });
+      setAddChurchSuccess("Church added successfully!");
+    } catch (err) {
+      setAddChurchError('Error adding church');
+      // Optionally: setAddChurchError(err?.response?.data?.message || 'Error adding church');
+    } finally {
+      setAddChurchLoading(false);
+    }
+  };
+
+  // Approve/Decline handler
+  const updateChurchStatus = async (id, status) => {
+    try {
+      await axios.put(`${API_BASE}/admin/churches/${id}/status`, { status });
+      await fetchChurches();
+    } catch (err) {
+      // Could show error, but keeping simple
+      // Optionally: toast.error(...)
+    }
+  };
+
+  // --- END NEW LOGIC ---
 
   const handleSubmit = async e => {
     e.preventDefault();
@@ -521,6 +620,30 @@ function ChurchesSection({ churches, loading, error, setChurches, handleViewDeta
       <h2 className="text-2xl font-bold mb-4 text-purple-800 dark:text-yellow-200 flex items-center gap-2">
         <FaChurch className="text-purple-500" /> Churches
       </h2>
+      {/* --- Manual Add Church Form --- */}
+      <form onSubmit={handleAddChurch} className="mb-4 p-4 border rounded bg-white dark:bg-gray-800">
+        <h2 className="text-lg font-semibold mb-2">Add New Church</h2>
+        <input
+          type="text"
+          placeholder="Church Name"
+          value={newChurch.name}
+          onChange={(e) => setNewChurch({ ...newChurch, name: e.target.value })}
+          className="border p-2 mr-2"
+        />
+        <input
+          type="text"
+          placeholder="Church Email"
+          value={newChurch.email}
+          onChange={(e) => setNewChurch({ ...newChurch, email: e.target.value })}
+          className="border p-2 mr-2"
+        />
+        <button type="submit" className="bg-blue-500 text-white px-4 py-2" disabled={addChurchLoading}>
+          {addChurchLoading ? "Adding..." : "Add"}
+        </button>
+        {addChurchError && <div className="text-red-500 mt-2">{addChurchError}</div>}
+        {addChurchSuccess && <div className="text-green-600 mt-2">{addChurchSuccess}</div>}
+      </form>
+      {/* --- END Manual Add --- */}
       <button
         className="mb-6 bg-purple-600 hover:bg-purple-700 text-white font-bold px-6 py-2 rounded-xl shadow disabled:opacity-60"
         onClick={() => setShowAddModal(true)}
@@ -573,8 +696,8 @@ function ChurchesSection({ churches, loading, error, setChurches, handleViewDeta
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredChurches.map(church => (
-            <div key={church.id} className="bg-white dark:bg-gray-800 rounded-xl shadow p-6 flex flex-col">
-              <div className="text-lg font-semibold text-purple-800 dark:text-yellow-200 mb-2">{church.church_name}</div>
+            <div key={church.id || church._id} className="bg-white dark:bg-gray-800 rounded-xl shadow p-6 flex flex-col">
+              <div className="text-lg font-semibold text-purple-800 dark:text-yellow-200 mb-2">{church.church_name || church.name}</div>
               <div className="flex-1">
                 <div className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                   <div>Email: {church.email}</div>
@@ -593,6 +716,21 @@ function ChurchesSection({ churches, loading, error, setChurches, handleViewDeta
                     onClick={() => handleEditChurch(church)}
                   >
                     Edit
+                  </button>
+                </div>
+                {/* Approve/Decline buttons */}
+                <div className="flex gap-2 mt-2">
+                  <button
+                    onClick={() => updateChurchStatus(church._id || church.id, 'approved')}
+                    className="bg-green-500 text-white px-2 py-1 rounded"
+                  >
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => updateChurchStatus(church._id || church.id, 'declined')}
+                    className="bg-red-500 text-white px-2 py-1 rounded"
+                  >
+                    Decline
                   </button>
                 </div>
               </div>
@@ -676,7 +814,7 @@ function toBase64(file) {
   });
 }
 
-// Placeholder for MembersSection
+// MembersSection with add-member functionality (calls /api/admin/add-member)
 function MembersSection({ members, loading, error }) {
   const [showAddModal, setShowAddModal] = React.useState(false);
   const [form, setForm] = React.useState({ name: '', email: '', password: '', role: 'member' });
@@ -701,10 +839,15 @@ function MembersSection({ members, loading, error }) {
     setFormError(null);
     setFormSuccess(null);
     try {
+      // Use the new /api/admin/add-member endpoint
       const token = localStorage.getItem("adminToken");
       await axios.post(
-        "https://churpay-backend.onrender.com/api/admin/members",
-        form,
+        "/api/admin/add-member",
+        {
+          name: form.name,
+          email: form.email,
+          password: form.password
+        },
         { headers: token ? { Authorization: `Bearer ${token}` } : {} }
       );
       setFormSuccess('Member added successfully!');
@@ -743,10 +886,7 @@ function MembersSection({ members, loading, error }) {
             <input type="text" name="name" value={form.name} onChange={handleChange} placeholder="Full Name" className="border rounded px-3 py-2 w-full" required />
             <input type="email" name="email" value={form.email} onChange={handleChange} placeholder="Email" className="border rounded px-3 py-2 w-full" required />
             <input type="password" name="password" value={form.password} onChange={handleChange} placeholder="Password" className="border rounded px-3 py-2 w-full" required />
-            <select name="role" value={form.role} onChange={handleChange} className="border rounded px-3 py-2 w-full" required>
-              <option value="member">Member</option>
-              <option value="admin">Admin</option>
-            </select>
+            {/* Role selection omitted, as /add-member only accepts member creation */}
             <div className="flex gap-3 mt-2">
               <button type="submit" className="flex-1 bg-gradient-to-r from-green-500 to-green-700 hover:from-green-600 hover:to-green-800 text-white px-6 py-3 rounded-full font-bold shadow-lg text-lg transition-all" disabled={submitting}>
                 {submitting ? 'Adding...' : 'Add Member'}

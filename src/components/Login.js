@@ -17,11 +17,13 @@ export default function Login() {
       setMsg("Login successful! Redirecting...");
       localStorage.setItem("churpay_token", res.data.token);
       localStorage.setItem("churpay_role", role);
-      if (role === "church") {
-        setTimeout(() => navigate("/dashboard"), 1000);
-      } else {
-        setTimeout(() => navigate("/member"), 1000);
-      }
+
+      // Save user info to use for navbar or conditional rendering
+      localStorage.setItem("churpay_user", JSON.stringify(res.data.user || {}));
+
+      // Navigate based on role
+      const redirectPath = role === "church" ? "/dashboard" : "/member-dashboard";
+      setTimeout(() => navigate(redirectPath), 1000);
     } catch (err) {
       setMsg(err.response?.data?.message || "Login failed.");
     }

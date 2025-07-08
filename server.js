@@ -3,6 +3,7 @@ const cors = require('cors');
 const path = require('path');
 const backendApi = require('./churpay-backend/index');
 
+
 const app = express();
 
 // Enable CORS
@@ -27,6 +28,9 @@ app.get('/', (req, res) => {
 app.get(/.*/, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
+
+const memberRoutes = require("./index.js"); // or another file
+app.use("/api", memberRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

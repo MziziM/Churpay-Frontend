@@ -23,22 +23,40 @@ export default function ChurchDashboard() {
   const [churchAccountNumber, setChurchAccountNumber] = useState("");
 
   useEffect(() => {
+  async function fetchData() {
     setLoading(true);
-    // Fetch church details (replace with your real endpoint)
-    axios.get("https://churpay-backend.onrender.com/api/church/me", { headers: { Authorization: `Bearer ${userToken}` } })
-      .then(res => {
-        setChurch(res.data);
-        setChurchAccountNumber(res.data.account_number || "");
-      })
-      .catch(() => setChurch(null));
-    axios.get("https://churpay-backend.onrender.com/api/projects")
-      .then(res => setProjects(res.data.filter(p => p.church === (church?.name || ""))))
-      .catch(() => setProjects([]));
-    axios.get("https://churpay-backend.onrender.com/api/donations")
-      .then(res => setDonations(res.data.filter(d => d.church === (church?.name || ""))))
-      .catch(() => setDonations([]))
-      .finally(() => setLoading(false));
-  }, [showForm]);
+    try {
+      const churchRes = await axios.get("https://churpay-backend.onrender.com/api/church/me", {
+        headers: { Authorization: `Bearer ${userToken}` }
+      });
+
+      const churchName = churchRes.data.name;
+      setChurch(churchRes.data);
+      setChurchAccountNumber(churchRes.data.account_number || "");
+
+      const [projectsRes, donationsRes] = await Promise.all([
+        axios.get("https://churpay-backend.onrender.com/api/projects"),
+        axios.get("https://churpay-backend.onrender.com/api/donations")
+      ]);
+
+      // Filter using the church's name
+      const filteredProjects = projectsRes.data.filter(p => p.church === churchName);
+      const filteredDonations = donationsRes.data.filter(d => d.church === churchName);
+
+      setProjects(filteredProjects);
+      setDonations(filteredDonations);
+    } catch (err) {
+      console.error("Fetch failed", err);
+      setChurch(null);
+      setProjects([]);
+      setDonations([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  fetchData();
+}, [showForm]);
 
   // Download CSV of donations
   function downloadCSV() {

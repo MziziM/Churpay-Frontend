@@ -50,6 +50,11 @@ export default function MemberDashboard() {
   // Fetch member dashboard data
   useEffect(() => {
     const fetchDashboardData = async () => {
+      // Set Authorization header from localStorage token if available
+      const token = localStorage.getItem("token");
+      if (token) {
+        memberAPI.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      }
       try {
         const response = await memberAPI.getDashboard();
         const { data } = response;

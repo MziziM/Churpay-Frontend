@@ -1,6 +1,17 @@
+<<<<<<< HEAD
 import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+=======
+
+import React, { useState, useEffect } from "react";
+import { authAPI, churchAPI } from "../api";
+
+const roles = [
+  { key: "member", label: "Member", desc: "Give, track donations, support projects" },
+  { key: "church", label: "Church", desc: "Create projects, receive support, manage your profile" }
+];
+>>>>>>> c429ac8 (Add axios to frontend dependencies)
 
 export default function Signup() {
   const [church_name, setChurchName] = useState("");
@@ -40,4 +51,7 @@ export default function Signup() {
     </section>
   );
 }
+<<<<<<< HEAD
       
+=======
+>>>>>>> c429ac8 (Add axios to frontend dependencies)

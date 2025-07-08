@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+
+>>>>>>> c429ac8 (Add axios to frontend dependencies)
 export default function Features() {
   return (
     <section className="max-w-3xl mx-auto mt-12 p-8 bg-white rounded-2xl shadow-xl">

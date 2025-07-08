@@ -1,1 +1,8 @@
+<<<<<<< HEAD
 /* This file is intentionally left blank. The main CSS is now in churpay-frontend/src/App.css. */
+=======
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+>>>>>>> c429ac8 (Add axios to frontend dependencies)

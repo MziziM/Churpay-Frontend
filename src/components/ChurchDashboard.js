@@ -1,62 +1,57 @@
 import React, { useState, useEffect } from "react";
 import jsPDF from "jspdf";
-import { Bar } from "react-chartjs-2";
-import { Chart, BarElement, CategoryScale, LinearScale } from "chart.js";
-Chart.register(BarElement, CategoryScale, LinearScale);
+import { FaMoneyBillWave, FaUsers, FaChurch, FaProjectDiagram, FaDownload } from "react-icons/fa";
 import axios from "axios";
-import { FaMoneyBillWave, FaUsers, FaChurch, FaProjectDiagram, FaRegCalendarCheck, FaDownload, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
-import PayoutRequestForm from "./PayoutRequestForm";
 import MyPayouts from "./MyPayouts";
 
-// Replace with your real logic for fetching the user's token:
-const userToken = window.localStorage.getItem("jwt_token");
+// Token (use churpay_token for consistency)
+const userToken = window.localStorage.getItem("churpay_token");
 
 export default function ChurchDashboard() {
+  const [church, setChurch] = useState(null);
   const [projects, setProjects] = useState([]);
   const [donations, setDonations] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [showPayoutForm, setShowPayoutForm] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Church account number (demo: generate if not present)
-  const [church, setChurch] = useState(null);
-  const [churchAccountNumber, setChurchAccountNumber] = useState("");
-
+  // Fetch everything on load and when showForm changes
   useEffect(() => {
-  async function fetchData() {
-    setLoading(true);
-    try {
-      const churchRes = await axios.get("https://churpay-backend.onrender.com/api/church/me", {
-        headers: { Authorization: `Bearer ${userToken}` }
-      });
+    async function fetchData() {
+      setLoading(true);
+      try {
+        // 1. Get church profile (main info)
+        const churchRes = await axios.get("/api/church/profile", {
+          headers: { Authorization: `Bearer ${userToken}` }
+        });
+        setChurch(churchRes.data);
 
-      const churchName = churchRes.data.name;
-      setChurch(churchRes.data);
-      setChurchAccountNumber(churchRes.data.account_number || "");
+        // 2. Get all projects, donations
+        const [projectsRes, donationsRes] = await Promise.all([
+          axios.get("https://churpay-backend.onrender.com/api/projects"),
+          axios.get("https://churpay-backend.onrender.com/api/donations")
+        ]);
 
-      const [projectsRes, donationsRes] = await Promise.all([
-        axios.get("https://churpay-backend.onrender.com/api/projects"),
-        axios.get("https://churpay-backend.onrender.com/api/donations")
-      ]);
+        // 3. Filter for this church's projects/donations
+        const filteredProjects = projectsRes.data.filter(
+          p => p.church === churchRes.data.name
+        );
+        const filteredDonations = donationsRes.data.filter(
+          d => d.church === churchRes.data.name
+        );
 
-      // Filter using the church's name
-      const filteredProjects = projectsRes.data.filter(p => p.church === churchName);
-      const filteredDonations = donationsRes.data.filter(d => d.church === churchName);
-
-      setProjects(filteredProjects);
-      setDonations(filteredDonations);
-    } catch (err) {
-      console.error("Fetch failed", err);
-      setChurch(null);
-      setProjects([]);
-      setDonations([]);
-    } finally {
-      setLoading(false);
+        setProjects(filteredProjects);
+        setDonations(filteredDonations);
+      } catch (err) {
+        setChurch(null);
+        setProjects([]);
+        setDonations([]);
+      } finally {
+        setLoading(false);
+      }
     }
-  }
-
-  fetchData();
-}, [showForm]);
+    fetchData();
+  }, [showForm]);
 
   // Download CSV of donations
   function downloadCSV() {
@@ -106,7 +101,8 @@ export default function ChurchDashboard() {
     doc.save(`church_giving_statement.pdf`);
   }
 
-  function handleProjectSubmit(e) {
+  // Add Project logic
+  async function handleProjectSubmit(e) {
     e.preventDefault();
     const form = e.target;
     const title = form.title.value.trim();
@@ -116,28 +112,29 @@ export default function ChurchDashboard() {
     if (!title || !goal) return alert("All fields required!");
     let imageUrl = "";
     if (imageFile) {
-      // Optionally, upload image to a service or encode as base64 (demo: skip real upload)
-      imageUrl = URL.createObjectURL(imageFile); // For demo only, replace with real upload in production
+      imageUrl = URL.createObjectURL(imageFile); // DEMO only
     }
-    axios.post("https://churpay-backend.onrender.com/api/projects", {
-      title,
-      goal,
-      raised: 0,
-      status: "Pending",
-      church: church?.name,
-      description,
-      image: imageUrl,
-      created: new Date().toISOString().slice(0, 10)
-    })
-      .then(res => {
-        setProjects(prev => [res.data, ...prev]);
-        setShowForm(false);
-        form.reset();
-        alert("New project created!");
-      })
-      .catch(() => alert("Failed to save project. Backend may be offline."));
+    try {
+      const res = await axios.post("https://churpay-backend.onrender.com/api/projects", {
+        title,
+        goal,
+        raised: 0,
+        status: "Pending",
+        church: church?.name,
+        description,
+        image: imageUrl,
+        created: new Date().toISOString().slice(0, 10)
+      });
+      setProjects(prev => [res.data, ...prev]);
+      setShowForm(false);
+      form.reset();
+      alert("New project created!");
+    } catch {
+      alert("Failed to save project. Backend may be offline.");
+    }
   }
 
+  // Project approval logic
   function handleProjectApproval(id, newStatus) {
     axios.patch(`https://churpay-backend.onrender.com/api/projects/${id}/status`, { status: newStatus })
       .then(() => {
@@ -150,21 +147,11 @@ export default function ChurchDashboard() {
       .catch(() => alert("Failed to update status. Backend may be offline."));
   }
 
-  // Chart data for top projects
+  // Chart data for top projects (if you use Chart.js)
   const projectNames = projects.map(p => p.title);
   const projectTotals = projects.map(
     p => donations.filter(d => d.project === p.title).reduce((sum, d) => sum + Number(d.amount), 0)
   );
-  const barData = {
-    labels: projectNames,
-    datasets: [
-      {
-        label: "Raised (R)",
-        data: projectTotals,
-        backgroundColor: "#a78bfa"
-      }
-    ]
-  };
 
   // Summary stats
   const stats = {
@@ -172,6 +159,22 @@ export default function ChurchDashboard() {
     numDonors: new Set(donations.map(d => d.giver)).size,
     totalProjects: projects.length,
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px] text-purple-600 text-xl font-bold">
+        Loading church dashboard...
+      </div>
+    );
+  }
+
+  if (!church) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px] text-red-600 text-xl font-bold">
+        Failed to load church data.
+      </div>
+    );
+  }
 
   return (
     <section className="w-full max-w-5xl mx-auto px-3 py-8 font-inter">
@@ -182,11 +185,11 @@ export default function ChurchDashboard() {
           <FaChurch className="text-7xl drop-shadow-xl" />
           <div>
             <div className="text-lg font-semibold tracking-wide mb-1">Welcome,</div>
-            <div className="text-3xl font-bold leading-tight">{church?.name}</div>
+            <div className="text-3xl font-bold leading-tight">{church.name}</div>
             <div className="text-base font-mono text-yellow-200 mt-1 flex items-center gap-2">
               <span className="font-semibold text-xs text-purple-100">Account Number:</span>
               <span className="bg-purple-900 text-yellow-200 px-2 py-0.5 rounded text-xs tracking-widest" title="Account Number">
-                {String(churchAccountNumber).padStart(7, '0')}
+                {String(church.account_number || "").padStart(7, '0')}
               </span>
             </div>
             <div className="text-base font-medium text-white mt-0.5">Church</div>
@@ -194,6 +197,7 @@ export default function ChurchDashboard() {
           </div>
         </div>
       </div>
+
       {/* Summary Cards Row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">
         <div className="rounded-2xl p-5 shadow bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900 dark:to-gray-900 flex flex-col items-start">
@@ -253,80 +257,13 @@ export default function ChurchDashboard() {
         </button>
       </div>
 
-      {/* Payouts */}
-      {showPayoutForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm" onClick={() => setShowPayoutForm(false)}>
-          <form
-            className="w-full max-w-lg mx-auto bg-gradient-to-br from-white via-purple-50 to-purple-100 dark:from-gray-900 dark:via-purple-950 dark:to-gray-900 border-2 border-purple-200 dark:border-purple-800 rounded-3xl shadow-2xl p-10 flex flex-col gap-6 relative animate-fade-in"
-            onClick={e => e.stopPropagation()}
-            onSubmit={e => {
-              e.preventDefault();
-              // handle payout logic here
-              setShowPayoutForm(false);
-            }}
-          >
-            <div className="flex items-center justify-center mb-2">
-              <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-green-600 text-white text-2xl shadow-lg mr-3">
-                <FaMoneyBillWave />
-              </span>
-              <h2 className="text-2xl font-extrabold text-purple-700 dark:text-yellow-200 text-center tracking-tight">Payout Request</h2>
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-sm font-semibold text-purple-700 dark:text-yellow-200">Bank Name</label>
-              <input type="text" name="bankName" required className="px-4 py-2 rounded-xl border-2 border-purple-200 dark:border-purple-700 bg-white dark:bg-gray-800 text-purple-900 dark:text-yellow-100 font-semibold text-base shadow focus:outline-none focus:border-purple-400 transition" placeholder="e.g. Standard Bank" />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-sm font-semibold text-purple-700 dark:text-yellow-200">Account Number</label>
-              <input type="text" name="accountNumber" required className="px-4 py-2 rounded-xl border-2 border-purple-200 dark:border-purple-700 bg-white dark:bg-gray-800 text-purple-900 dark:text-yellow-100 font-semibold text-base shadow focus:outline-none focus:border-purple-400 transition" placeholder="e.g. 1234567" />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-sm font-semibold text-purple-700 dark:text-yellow-200">Account Holder</label>
-              <input type="text" name="accountHolder" required className="px-4 py-2 rounded-xl border-2 border-purple-200 dark:border-purple-700 bg-white dark:bg-gray-800 text-purple-900 dark:text-yellow-100 font-semibold text-base shadow focus:outline-none focus:border-purple-400 transition" placeholder="e.g. GCC Faith Center" />
-            </div>
-            <div className="flex gap-3 mt-2">
-              <button type="submit" className="flex-1 bg-gradient-to-r from-green-500 to-green-700 hover:from-green-600 hover:to-green-800 text-white px-6 py-3 rounded-full font-bold shadow-lg text-lg transition-all">Submit</button>
-              <button type="button" className="flex-1 bg-gray-200 dark:bg-gray-700 text-purple-700 dark:text-purple-200 px-6 py-3 rounded-full font-bold shadow-lg text-lg transition-all" onClick={() => setShowPayoutForm(false)}>Cancel</button>
-            </div>
-          </form>
-        </div>
-      )}
       {/* Project Add Modal */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm" onClick={() => setShowForm(false)}>
           <form
             className="w-full max-w-lg mx-auto bg-gradient-to-br from-white via-purple-50 to-purple-100 dark:from-gray-900 dark:via-purple-950 dark:to-gray-900 border-2 border-purple-200 dark:border-purple-800 rounded-3xl shadow-2xl p-10 flex flex-col gap-6 relative animate-fade-in"
             onClick={e => e.stopPropagation()}
-            onSubmit={async e => {
-              e.preventDefault();
-              const form = e.target;
-              const title = form.title.value.trim();
-              const goal = Number(form.goal.value);
-              const description = form.description.value.trim();
-              const imageFile = form.image.files[0];
-              if (!title || !goal) return alert("All fields required!");
-              let imageUrl = "";
-              if (imageFile) {
-                // Optionally, upload image to a service or encode as base64 (demo: skip real upload)
-                imageUrl = URL.createObjectURL(imageFile); // For demo only, replace with real upload in production
-              }
-              axios.post("https://churpay-backend.onrender.com/api/projects", {
-                title,
-                goal,
-                raised: 0,
-                status: "Pending",
-                church: church?.name,
-                description,
-                image: imageUrl,
-                created: new Date().toISOString().slice(0, 10)
-              })
-                .then(res => {
-                  setProjects(prev => [res.data, ...prev]);
-                  setShowForm(false);
-                  form.reset();
-                  alert("New project created!");
-                })
-                .catch(() => alert("Failed to save project. Backend may be offline."));
-            }}
+            onSubmit={handleProjectSubmit}
           >
             <div className="flex items-center justify-center mb-2">
               <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-indigo-400 to-indigo-600 text-white text-2xl shadow-lg mr-3">
@@ -357,6 +294,8 @@ export default function ChurchDashboard() {
           </form>
         </div>
       )}
+
+      {/* Payouts (modal trigger, or show in section) */}
       <div className="my-10">
         <MyPayouts token={userToken} />
       </div>

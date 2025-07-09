@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { FaChurch, FaHandsHelping, FaChild, FaUtensils, FaUserCircle, FaMedal, FaArrowUp, FaSpinner } from "react-icons/fa";
 import { MdStar, MdRepeat, MdTrendingUp } from "react-icons/md";
 import jsPDF from "jspdf";
-import { memberAPI, getUserData, getDonationStats, getProjects } from "../api";
+import { memberAPI } from "../api"; // Adjust this import if needed
 
 const BADGE_LIST = [
   { key: "firstGift", label: "First Gift", icon: <MdStar className="inline mb-1 text-yellow-400" /> },
@@ -13,6 +13,7 @@ const BADGE_LIST = [
 ];
 
 export default function MemberDashboard() {
+  // Dashboard Stats and UI
   const [donations, setDonations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -28,29 +29,22 @@ export default function MemberDashboard() {
     recurring: { enabled: false, type: "Tithe", amount: 500 },
     monthlyTrend: [],
     memberName: "Your Name",
+    churchName: "Your Church",
+    memberAccountNumber: "",
   });
-  const [editingGoal, setEditingGoal] = useState(false);
-  const [newGoal, setNewGoal] = useState(stats.goal);
-
-  const [atTop, setAtTop] = useState(true);
-  const [givingType, setGivingType] = useState("Tithe");
   const [showGiveOptions, setShowGiveOptions] = useState(false);
   const [giveAmount, setGiveAmount] = useState(100);
-
-  useEffect(() => {
-    function handleScroll() {
-      setAtTop(window.scrollY < 50);
-    }
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
+  const [editingGoal, setEditingGoal] = useState(false);
+  const [newGoal, setNewGoal] = useState(5000);
+  const [updatingGoal, setUpdatingGoal] = useState(false);
   const [error, setError] = useState(null);
-  
-  // Fetch member dashboard data
+
+  // Bar width for goal progress
+  const barWidth = Math.min((stats.totalGiven / stats.goal) * 100, 100);
+
+  // Fetch dashboard/profile data
   useEffect(() => {
     const fetchDashboardData = async () => {
-      // Set Authorization header from localStorage token if available
       const token = localStorage.getItem("token");
       if (token) {
         memberAPI.defaults.headers.common["Authorization"] = `Bearer ${token}`;
@@ -58,8 +52,6 @@ export default function MemberDashboard() {
       try {
         const response = await memberAPI.getDashboard();
         const { data } = response;
-        
-        setDonations(data.donations || []);
         setStats({
           ...data.stats,
           goal: data.stats?.goal || 5000,
@@ -68,161 +60,99 @@ export default function MemberDashboard() {
           monthlyTrend: data.stats?.monthlyTrend || [],
           memberName: data.stats?.memberName || "Your Name",
           churchName: data.stats?.churchName || "Your Church",
-          memberAccountNumber: 1000000,
+          memberAccountNumber: data.stats?.memberAccountNumber || "",
         });
+        setDonations(data.donations || []);
         setNewGoal(data.stats?.goal || 5000);
         setError(null);
       } catch (err) {
-        console.error("Error fetching dashboard data:", err);
-        setError("Could not load your dashboard. Please try again later.");
-        
-        // Demo fallback data for development/testing purposes
-        /*
-        if (process.env.NODE_ENV === 'development') {
-          setDonations([
-            { id: 1, date: new Date(), project: "Youth Ministry", amount: 1000 },
-            { id: 2, date: new Date(), project: "Food Drive", amount: 250 },
-            { id: 3, date: new Date(), project: "Mission Sunday", amount: 500 },
-          ]);
-          setStats({
-            totalGiven: 6250,
-            transactions: 5,
-            activeGivers: 3,
-            churchesHelped: 4,
-            projectsFunded: 6,
-            kidsSponsored: 15,
-            mealsProvided: 72,
-            badges: {
-              firstGift: true,
-              r1000Club: true,
-              r5000Club: true,
-              consistentGiver: true,
-              bigGift: false,
-            },
-            goal: 5000,
-            recurring: { enabled: true, type: "Tithe", amount: 500 },
-            monthlyTrend: [200, 500, 1000, 0, 2000, 1550, 800],
-            memberName: "Mzizi Mzwakhe",
-            churchName: "Grace Community Church",
-            memberAccountNumber: 1000000,
-          });
-        }
-        */
+        setError("Failed to load dashboard.");
       } finally {
         setLoading(false);
       }
     };
-    
     fetchDashboardData();
   }, []);
 
-  // Animation for goal bar
-  const [barWidth, setBarWidth] = useState(0);
-  useEffect(() => {
-    if (!loading) {
-      const pct = Math.min((stats.totalGiven / stats.goal) * 100, 100);
-      setTimeout(() => setBarWidth(pct), 300);
-    }
-  }, [loading, stats.totalGiven, stats.goal]);
-
-  // Add API endpoint for updating member goals
-  const [updatingGoal, setUpdatingGoal] = useState(false);
-  
-  const handleGoalSave = async () => {
-    if (newGoal <= 0) {
-      alert("Please enter a valid goal amount greater than zero");
-      return;
-    }
-    
-    setUpdatingGoal(true);
-    try {
-      // We need to add this endpoint to our API
-      await memberAPI.updateGoal(Number(newGoal));
-      
-      // Update local state after successful API call
-      setStats(prev => ({ ...prev, goal: Number(newGoal) }));
-      setEditingGoal(false);
-      setTimeout(() => setBarWidth(Math.min((stats.totalGiven / newGoal) * 100, 100)), 200);
-    } catch (err) {
-      console.error("Error updating goal:", err);
-      alert("Failed to update your giving goal. Please try again.");
-    } finally {
-      setUpdatingGoal(false);
-    }
-  };
-
-  // CSV Download
-  function downloadCSV() {
-    const headers = ["Date", "Project", "Amount"];
-    const rows = donations.map(d =>
-      [new Date(d.date).toLocaleString(), d.project, d.amount].join(",")
-    );
-    const csvContent = [headers.join(","), ...rows].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `churpay_donations_${stats.memberName.replace(/\s+/g, "_")}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+  // Give Now (PayFast for church)
+  function handleGiveNow(e) {
+    e.preventDefault();
+    setShowGiveOptions(false);
+    let itemName = stats.churchName ? `Church: ${stats.churchName}` : "ChurPay Member Gift";
+    const payfastUrl = `https://sandbox.payfast.co.za/eng/process?amount=${giveAmount}&item_name=${encodeURIComponent(itemName)}&custom_str1=ACC${stats.memberAccountNumber}`;
+    window.location.href = payfastUrl;
   }
 
-  // PDF Statement Download
+  // Save new giving goal
+  async function handleGoalSave() {
+    setUpdatingGoal(true);
+    try {
+      await memberAPI.updateGoal({ goal: newGoal });
+      setStats(prev => ({ ...prev, goal: newGoal }));
+      setEditingGoal(false);
+    } catch (err) {
+      alert("Failed to update goal.");
+    }
+    setUpdatingGoal(false);
+  }
+
+  // Download CSV for donations
+  function downloadCSV() {
+    if (!donations.length) return;
+    const headers = "Date,Project,Amount\n";
+    const rows = donations.map(d => `${new Date(d.date).toLocaleString()},${d.project},R${d.amount}`).join("\n");
+    const blob = new Blob([headers + rows], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "donations.csv";
+    a.click();
+    window.URL.revokeObjectURL(url);
+  }
+
+  // Download PDF for donations
   function downloadPDF() {
+    if (!donations.length) return;
     const doc = new jsPDF();
-    doc.setFontSize(18);
-    doc.setTextColor("#7c3aed");
-    doc.text("ChurPay Giving Statement", 20, 20);
-    doc.setFontSize(12);
-    doc.setTextColor("#333");
-    doc.text(`Name: ${stats.memberName || "-"}`, 20, 35);
-    doc.text(`Church: ${stats.churchName || "-"}`, 20, 43);
-    doc.text(`Total Given: R${stats.totalGiven}`, 20, 51);
-    doc.text("Recent Donations:", 20, 61);
-    let y = 70;
+    doc.setFontSize(16);
+    doc.text("ChurPay Giving Statement", 14, 18);
     doc.setFontSize(10);
-    doc.text("Date", 20, y);
-    doc.text("Project", 70, y);
-    doc.text("Amount", 150, y);
-    y += 6;
-    donations.slice(0, 20).forEach(d => {
-      doc.text(new Date(d.date).toLocaleString(), 20, y);
-      doc.text(d.project, 70, y);
-      doc.text("R" + d.amount, 150, y);
-      y += 6;
-      if (y > 270) {
-        doc.addPage();
-        y = 20;
-      }
+    doc.text(`Name: ${stats.memberName || ""}`, 14, 28);
+    doc.text(`Church: ${stats.churchName || ""}`, 14, 34);
+    doc.text(`Account #: ${stats.memberAccountNumber || ""}`, 14, 40);
+    doc.setFontSize(12);
+    doc.text("Recent Donations:", 14, 50);
+    let y = 60;
+    doc.setFontSize(10);
+    donations.slice(0, 10).forEach(d => {
+      doc.text(`${new Date(d.date).toLocaleString()}  |  ${d.project}  |  R${d.amount}`, 14, y);
+      y += 7;
     });
-    doc.save(`churpay_statement_${stats.memberName.replace(/\s+/g, "_")}.pdf`);
+    doc.save("ChurPay-Donations.pdf");
+  }
+
+  // Loader
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <FaSpinner className="animate-spin text-3xl text-purple-700" />
+      </div>
+    );
+  }
+
+  // Error display
+  if (error) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px] text-red-600 font-bold">
+        {error}
+      </div>
+    );
   }
 
   return (
     <div className="w-full max-w-5xl mx-auto px-3 py-8 font-inter">
-      {/* Loading and Error State */}
-      {loading ? (
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <FaSpinner className="animate-spin text-4xl text-purple-500 mx-auto mb-4" />
-            <p className="text-gray-600">Loading your dashboard...</p>
-          </div>
-        </div>
-      ) : error ? (
-        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-8 rounded">
-          <p className="font-bold">Error</p>
-          <p>{error}</p>
-          <button 
-            className="mt-3 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
-            onClick={() => window.location.reload()}
-          >
-            Retry
-          </button>
-        </div>
-      ) : (
-        <>
-        {/* Hero Card */}
-      <div className="relative bg-gradient-to-br from-purple-700 to-indigo-500 dark:from-purple-900 dark:to-gray-900 rounded-3xl shadow-xl p-10 mb-10 text-white overflow-hidden flex flex-col md:flex-row items-center gap-8">
+      {/* Hero Card */}
+      <div className="relative bg-gradient-to-br from-purple-700 to-indigo-500 rounded-3xl shadow-xl p-10 mb-10 text-white overflow-hidden flex flex-col md:flex-row items-center gap-8">
         <div className="absolute top-0 right-0 opacity-10 text-9xl select-none pointer-events-none">💜</div>
         <div className="flex items-center gap-6 flex-1">
           <FaUserCircle className="text-7xl drop-shadow-xl" />
@@ -257,22 +187,8 @@ export default function MemberDashboard() {
               <form
                 className="flex flex-col bg-white dark:bg-gray-900 border border-purple-200 dark:border-purple-700 rounded-xl shadow-2xl p-6 w-72 z-40 relative"
                 onClick={e => e.stopPropagation()}
-                onSubmit={e => {
-                  e.preventDefault();
-                  setShowGiveOptions(false);
-                  const payfastUrl = `https://sandbox.payfast.co.za/eng/process?amount=${giveAmount}&item_name=${givingType}`;
-                  window.location.href = payfastUrl;
-                }}
+                onSubmit={handleGiveNow}
               >
-                <label className="mb-2 text-purple-700 dark:text-yellow-200 font-semibold">Giving Type</label>
-                <select
-                  value={givingType}
-                  onChange={e => setGivingType(e.target.value)}
-                  className="mb-3 px-3 py-2 rounded-lg border border-purple-200 dark:border-purple-700 bg-white dark:bg-gray-800 text-purple-800 dark:text-yellow-100 font-semibold text-base shadow focus:outline-none focus:border-purple-400 transition"
-                >
-                  <option value="Tithe">Offerings</option>
-                  <option value="Tithe">Tithe</option>
-                </select>
                 <label className="mb-2 text-purple-700 dark:text-yellow-200 font-semibold">Amount (R)</label>
                 <input
                   type="number"
@@ -378,7 +294,6 @@ export default function MemberDashboard() {
                     recurring: { ...prev.recurring, enabled: newValue } 
                   }));
                 } catch (err) {
-                  console.error("Error updating recurring settings:", err);
                   alert("Failed to update your recurring giving settings. Please try again.");
                 }
               }}
@@ -400,7 +315,6 @@ export default function MemberDashboard() {
                   recurring: { ...prev.recurring, type: newType } 
                 }));
               } catch (err) {
-                console.error("Error updating recurring settings:", err);
                 alert("Failed to update your recurring giving settings. Please try again.");
               }
             }}
@@ -429,7 +343,6 @@ export default function MemberDashboard() {
                     amount: amount
                   });
                 } catch (err) {
-                  console.error("Error updating recurring settings:", err);
                   alert("Failed to update your recurring giving settings. Please try again.");
                 }
               }
@@ -561,8 +474,6 @@ export default function MemberDashboard() {
       <div className="text-xs text-gray-400 mt-2 text-center">
         Thank you for being a blessing through ChurPay. Every rand counts! 💜
       </div>
-      </>
-      )}
     </div>
   );
 }

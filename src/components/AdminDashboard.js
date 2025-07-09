@@ -436,7 +436,7 @@ useEffect(() => {
   actionLoading={actionLoading}
   actionError={actionError}
   handlePayoutAction={handlePayoutAction}
-/>
+/> 
             )}
             {section === 'projects' && (
               <ProjectsSection 

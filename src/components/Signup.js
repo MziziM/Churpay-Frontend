@@ -69,8 +69,11 @@ export default function Signup() {
           church: selectedChurch, // send selected church
         });
       }
-      setMsg("Registration successful! You can now log in.");
-      setTimeout(() => navigate("/login"), 1200);
+      if (role === "member") {
+        navigate("/member/dashboard");
+      } else {
+        navigate("/church/dashboard");
+      }
     } catch (err) {
       setMsg(err.response?.data?.message || "Registration failed.");
     }
@@ -178,28 +181,6 @@ export default function Signup() {
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="#a78bfa">
                   <rect width="24" height="24" rx="4" fill="#a78bfa" opacity="0.12"/>
                   <path d="M10 2a4 4 0 00-4 4v2H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-1V6a4 4 0 00-4-4zm-2 6V6a2 2 0 114 0v2H8z" fill="#a78bfa"/>
-                </svg>
-              </span>
-            </div>
-            <div className="relative">
-              <select
-                className="w-full border border-purple-200 rounded-lg px-12 py-4 text-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
-                value={selectedChurch}
-                onChange={e => setSelectedChurch(e.target.value)}
-                required
-              >
-                <option value="">Select your church</option>
-                {churches.map(church => (
-                  <option key={church._id || church.id} value={church.name}>
-                    {church.name}
-                  </option>
-                ))}
-              </select>
-              <span className="absolute left-4 top-1/2 -translate-y-1/2">
-                {/* Church icon */}
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="#a78bfa">
-                  <rect width="24" height="24" rx="4" fill="#a78bfa" opacity="0.12"/>
-                  <path d="M12 2L2 7v2h2v11h6v-6h4v6h6V9h2V7L12 2zm0 2.18L19.5 7H17v11h-3v-6H10v6H7V7H4.5L12 4.18z" fill="#a78bfa"/>
                 </svg>
               </span>
             </div>

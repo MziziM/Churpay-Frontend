@@ -5,6 +5,7 @@ import jsPDF from "jspdf";
 import { memberAPI } from "../api";
 import axios from "axios";
 
+
 const BADGE_LIST = [
   { key: "firstGift", label: "First Gift", icon: <MdStar className="inline mb-1 text-yellow-400" /> },
   { key: "r1000Club", label: "R1000 Club", icon: <FaMedal className="inline mb-1 text-yellow-400" /> },

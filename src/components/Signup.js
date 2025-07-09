@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
@@ -23,7 +23,22 @@ export default function Signup() {
   const [member_password, setMemberPassword] = useState("");
 
   const [msg, setMsg] = useState("");
+  const [churches, setChurches] = useState([]);
+  const [selectedChurch, setSelectedChurch] = useState("");
   const navigate = useNavigate();
+
+  // Fetch churches for dropdown
+  useEffect(() => {
+    async function fetchChurches() {
+      try {
+        const res = await axios.get("/api/churches"); // Adjust endpoint as needed
+        setChurches(res.data);
+      } catch {
+        setChurches([]);
+      }
+    }
+    fetchChurches();
+  }, []);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -51,6 +66,7 @@ export default function Signup() {
           member_name,
           email: member_email,
           password: member_password,
+          church: selectedChurch, // send selected church
         });
       }
       setMsg("Registration successful! You can now log in.");
@@ -165,6 +181,28 @@ export default function Signup() {
                 </svg>
               </span>
             </div>
+            <div className="relative">
+              <select
+                className="w-full border border-purple-200 rounded-lg px-12 py-4 text-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
+                value={selectedChurch}
+                onChange={e => setSelectedChurch(e.target.value)}
+                required
+              >
+                <option value="">Select your church</option>
+                {churches.map(church => (
+                  <option key={church._id || church.id} value={church.name}>
+                    {church.name}
+                  </option>
+                ))}
+              </select>
+              <span className="absolute left-4 top-1/2 -translate-y-1/2">
+                {/* Church icon */}
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="#a78bfa">
+                  <rect width="24" height="24" rx="4" fill="#a78bfa" opacity="0.12"/>
+                  <path d="M12 2L2 7v2h2v11h6v-6h4v6h6V9h2V7L12 2zm0 2.18L19.5 7H17v11h-3v-6H10v6H7V7H4.5L12 4.18z" fill="#a78bfa"/>
+                </svg>
+              </span>
+            </div>
             <button className="w-full bg-gradient-to-r from-purple-700 to-indigo-600 hover:from-purple-800 hover:to-indigo-700 text-yellow-300 font-bold py-4 rounded-xl shadow-md transition text-xl">
               Create Account
             </button>
@@ -187,7 +225,7 @@ export default function Signup() {
                 {/* Church icon */}
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="#a78bfa">
                   <rect width="24" height="24" rx="4" fill="#a78bfa" opacity="0.12"/>
-                  <path d="M12 2L2 7v2h2v11h6v-6h4v6h6V9h2V7L12 2zm0 2.18L19.5 7H17v11h-3v-6H10v6H7V7H4.5L12 4.18z" fill="#a78bfa"/>
+                  <path d="M12 2L2 7v2h2v11h-3v-6H10v6h4v-6h3v6h6V9h2V7L12 2zm0 2.18L19.5 7H17v11h-3v-6H10v6H7V7H4.5L12 4.18z" fill="#a78bfa"/>
                 </svg>
               </span>
             </div>

@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { FaChurch, FaHandsHelping, FaChild, FaUtensils, FaUserCircle, FaMedal, FaArrowUp, FaSpinner } from "react-icons/fa";
 import { MdStar, MdRepeat, MdTrendingUp } from "react-icons/md";
 import jsPDF from "jspdf";
-import { memberAPI } from "../api"; // Adjust this import if needed
+import { memberAPI } from "../api";
+import axios from "axios";
 
 const BADGE_LIST = [
   { key: "firstGift", label: "First Gift", icon: <MdStar className="inline mb-1 text-yellow-400" /> },
@@ -12,69 +13,67 @@ const BADGE_LIST = [
   { key: "bigGift", label: "Big Gift", icon: <MdTrendingUp className="inline mb-1 text-purple-400" /> },
 ];
 
+const DEFAULT_STATS = {
+  memberName: "Your Name",
+  memberAccountNumber: "",
+  churchName: "Your Church",
+  totalGiven: 0,
+  transactions: 0,
+  activeGivers: "-",
+  churchesHelped: 0,
+  projectsFunded: 0,
+  kidsSponsored: 0,
+  mealsProvided: 0,
+  badges: {},
+  goal: 5000,
+  recurring: { enabled: false, type: "Tithe", amount: 500 },
+  monthlyTrend: [],
+};
+
 export default function MemberDashboard() {
-  // Dashboard Stats and UI
-  const [donations, setDonations] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
-    totalGiven: 0,
-    transactions: 0,
-    activeGivers: "-",
-    churchesHelped: 0,
-    projectsFunded: 0,
-    kidsSponsored: 0,
-    mealsProvided: 0,
-    badges: {},
-    goal: 5000,
-    recurring: { enabled: false, type: "Tithe", amount: 500 },
-    monthlyTrend: [],
-    memberName: "Your Name",
-    churchName: "Your Church",
-    memberAccountNumber: "",
-  });
+  const [error, setError] = useState(null);
+  const [stats, setStats] = useState(DEFAULT_STATS);
+  const [donations, setDonations] = useState([]);
   const [showGiveOptions, setShowGiveOptions] = useState(false);
   const [giveAmount, setGiveAmount] = useState(100);
   const [editingGoal, setEditingGoal] = useState(false);
-  const [newGoal, setNewGoal] = useState(5000);
+  const [newGoal, setNewGoal] = useState(DEFAULT_STATS.goal);
   const [updatingGoal, setUpdatingGoal] = useState(false);
-  const [error, setError] = useState(null);
 
-  // Bar width for goal progress
-  const barWidth = Math.min((stats.totalGiven / stats.goal) * 100, 100);
-
-  // Fetch dashboard/profile data
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      const token = localStorage.getItem("token");
-      if (token) {
-        memberAPI.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-      }
+    async function fetchAll() {
+      setLoading(true);
+      setError(null);
       try {
-        const response = await memberAPI.getDashboard();
-        const { data } = response;
+        const { data } = await memberAPI.getDashboard();
         setStats({
+          ...DEFAULT_STATS,
           ...data.stats,
-          goal: data.stats?.goal || 5000,
-          recurring: data.stats?.recurring || { enabled: false, type: "Tithe", amount: 500 },
-          badges: data.stats?.badges || {},
-          monthlyTrend: data.stats?.monthlyTrend || [],
-          memberName: data.stats?.memberName || "Your Name",
-          churchName: data.stats?.churchName || "Your Church",
-          memberAccountNumber: data.stats?.memberAccountNumber || "",
+          memberName: data.stats?.memberName || DEFAULT_STATS.memberName,
+          memberAccountNumber: data.stats?.memberAccountNumber || DEFAULT_STATS.memberAccountNumber,
+          churchName: data.stats?.churchName || DEFAULT_STATS.churchName,
+          goal: data.stats?.goal || DEFAULT_STATS.goal,
+          recurring: data.stats?.recurring || DEFAULT_STATS.recurring,
+          badges: data.stats?.badges || DEFAULT_STATS.badges,
+          monthlyTrend: data.stats?.monthlyTrend || DEFAULT_STATS.monthlyTrend,
         });
         setDonations(data.donations || []);
-        setNewGoal(data.stats?.goal || 5000);
-        setError(null);
+        setNewGoal(data.stats?.goal || DEFAULT_STATS.goal);
       } catch (err) {
         setError("Failed to load dashboard.");
-      } finally {
-        setLoading(false);
       }
-    };
-    fetchDashboardData();
+      setLoading(false);
+    }
+    fetchAll();
+    // eslint-disable-next-line
   }, []);
 
-  // Give Now (PayFast for church)
+  // Bar width for goal progress
+  const totalGiven = Number(stats.totalGiven) || 0;
+  const goal = Number(stats.goal) || 1;
+  const barWidth = Math.min((totalGiven / goal) * 100, 100);
+
   function handleGiveNow(e) {
     e.preventDefault();
     setShowGiveOptions(false);
@@ -83,7 +82,6 @@ export default function MemberDashboard() {
     window.location.href = payfastUrl;
   }
 
-  // Save new giving goal
   async function handleGoalSave() {
     setUpdatingGoal(true);
     try {
@@ -96,7 +94,6 @@ export default function MemberDashboard() {
     setUpdatingGoal(false);
   }
 
-  // Download CSV for donations
   function downloadCSV() {
     if (!donations.length) return;
     const headers = "Date,Project,Amount\n";
@@ -110,7 +107,6 @@ export default function MemberDashboard() {
     window.URL.revokeObjectURL(url);
   }
 
-  // Download PDF for donations
   function downloadPDF() {
     if (!donations.length) return;
     const doc = new jsPDF();
@@ -131,7 +127,6 @@ export default function MemberDashboard() {
     doc.save("ChurPay-Donations.pdf");
   }
 
-  // Loader
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
@@ -140,7 +135,6 @@ export default function MemberDashboard() {
     );
   }
 
-  // Error display
   if (error) {
     return (
       <div className="flex justify-center items-center min-h-[400px] text-red-600 font-bold">
@@ -216,143 +210,6 @@ export default function MemberDashboard() {
           )}
         </div>
       </div>
-      {/* Dashboard Main */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-7">
-        <div className="bg-white rounded-2xl p-6 shadow flex flex-col items-center hover:shadow-lg transition-all duration-200">
-          <div className="text-2xl font-extrabold text-purple-700 mb-1 animate-pulse">R{stats.totalGiven}</div>
-          <div className="text-xs text-gray-500 font-semibold tracking-wide">Total Given</div>
-        </div>
-        <div className="bg-white rounded-2xl p-6 shadow flex flex-col items-center hover:shadow-lg transition-all duration-200">
-          <div className="text-2xl font-extrabold text-indigo-600 mb-1">{stats.transactions}</div>
-          <div className="text-xs text-gray-500 font-semibold tracking-wide">Transactions</div>
-        </div>
-        <div className="bg-white rounded-2xl p-6 shadow flex flex-col items-center hover:shadow-lg transition-all duration-200">
-          <div className="text-2xl font-extrabold text-green-600 mb-1">{stats.activeGivers}</div>
-          <div className="text-xs text-gray-500 font-semibold tracking-wide">Active Givers</div>
-        </div>
-      </div>
-      {/* Impact Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6 text-center text-sm font-semibold">
-        <div className="bg-purple-50 py-5 rounded-2xl shadow flex flex-col items-center">
-          <FaChurch className="text-2xl text-purple-400 mb-1" />{stats.churchesHelped}
-          <div className="text-xs text-gray-500 font-normal mt-1">Churches</div>
-        </div>
-        <div className="bg-purple-50 py-5 rounded-2xl shadow flex flex-col items-center">
-          <FaHandsHelping className="text-2xl text-indigo-400 mb-1" />{stats.projectsFunded}
-          <div className="text-xs text-gray-500 font-normal mt-1">Projects</div>
-        </div>
-        <div className="bg-purple-50 py-5 rounded-2xl shadow flex flex-col items-center">
-          <FaChild className="text-2xl text-yellow-400 mb-1" />{stats.kidsSponsored}
-          <div className="text-xs text-gray-500 font-normal mt-1">Kids</div>
-        </div>
-        <div className="bg-purple-50 py-5 rounded-2xl shadow flex flex-col items-center">
-          <FaUtensils className="text-2xl text-green-400 mb-1" />{stats.mealsProvided}
-          <div className="text-xs text-gray-500 font-normal mt-1">Meals</div>
-        </div>
-      </div>
-      {/* Badges */}
-      <div className="mb-6">
-        <div className="font-semibold text-purple-700 mb-2 flex items-center gap-2">
-          <MdStar className="text-yellow-400" /> Your Giving Badges
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {BADGE_LIST.map(badge =>
-            stats.badges[badge.key] ? (
-              <span key={badge.key} className="flex items-center gap-1 bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-semibold shadow-sm animate-fade-in">
-                {badge.icon}{badge.label}
-              </span>
-            ) : (
-              <span key={badge.key} className="flex items-center gap-1 bg-gray-100 text-gray-400 px-3 py-1 rounded-full text-xs font-semibold shadow-sm opacity-60">
-                {badge.icon}{badge.label}
-              </span>
-            )
-          )}
-        </div>
-      </div>
-      {/* Recurring Giving */}
-      <div className="mb-6 bg-white rounded-2xl p-5 shadow flex flex-col md:flex-row items-center justify-between gap-4 border-l-4 border-purple-300">
-        <div>
-          <div className="font-semibold text-purple-700 mb-1 flex items-center gap-2">
-            <MdRepeat className="text-green-400" /> Recurring Giving
-          </div>
-          <div className="text-xs text-gray-500 mb-2">Automatic monthly giving for peace of mind</div>
-        </div>
-        <div className="flex items-center gap-2">
-          <label className="flex items-center gap-1 text-xs font-medium">
-            <input
-              type="checkbox"
-              checked={stats.recurring.enabled}
-              onChange={async (e) => {
-                const newValue = e.target.checked;
-                try {
-                  await memberAPI.updateRecurring({
-                    ...stats.recurring,
-                    enabled: newValue
-                  });
-                  setStats(prev => ({ 
-                    ...prev, 
-                    recurring: { ...prev.recurring, enabled: newValue } 
-                  }));
-                } catch (err) {
-                  alert("Failed to update your recurring giving settings. Please try again.");
-                }
-              }}
-              className="accent-purple-500"
-            />
-            Auto-Give
-          </label>
-          <select
-            value={stats.recurring.type}
-            onChange={async (e) => {
-              const newType = e.target.value;
-              try {
-                await memberAPI.updateRecurring({
-                  ...stats.recurring,
-                  type: newType
-                });
-                setStats(prev => ({ 
-                  ...prev, 
-                  recurring: { ...prev.recurring, type: newType } 
-                }));
-              } catch (err) {
-                alert("Failed to update your recurring giving settings. Please try again.");
-              }
-            }}
-            className="ml-2 px-2 py-1 rounded border border-gray-300 text-xs"
-          >
-            <option>Tithe</option>
-            <option>Offering</option>
-            <option>Other</option>
-          </select>
-          <input
-            type="number"
-            value={stats.recurring.amount}
-            onChange={(e) => {
-              const value = e.target.value;
-              setStats(prev => ({ 
-                ...prev, 
-                recurring: { ...prev.recurring, amount: value } 
-              }));
-            }}
-            onBlur={async (e) => {
-              const amount = Number(e.target.value);
-              if (amount > 0) {
-                try {
-                  await memberAPI.updateRecurring({
-                    ...stats.recurring,
-                    amount: amount
-                  });
-                } catch (err) {
-                  alert("Failed to update your recurring giving settings. Please try again.");
-                }
-              }
-            }}
-            min={1}
-            className="ml-2 px-2 py-1 rounded border border-gray-300 text-xs w-20"
-          />
-          <span className="ml-1 text-xs text-gray-500">Monthly</span>
-        </div>
-      </div>
       {/* Giving Goal Card */}
       <div className="mb-7 bg-gradient-to-r from-yellow-50 via-yellow-100 to-purple-50 rounded-2xl p-5 shadow-md relative">
         <div className="flex justify-between items-center">
@@ -367,16 +224,16 @@ export default function MemberDashboard() {
                   className="w-20 px-1 py-0.5 border rounded"
                   disabled={updatingGoal}
                 />
-                <button 
-                  className="ml-2 text-green-600 text-xs font-semibold flex items-center gap-1" 
+                <button
+                  className="ml-2 text-green-600 text-xs font-semibold flex items-center gap-1"
                   onClick={handleGoalSave}
                   disabled={updatingGoal}
                 >
                   {updatingGoal && <FaSpinner className="animate-spin text-xs" />}
                   Save
                 </button>
-                <button 
-                  className="ml-1 text-gray-500 text-xs" 
+                <button
+                  className="ml-1 text-gray-500 text-xs"
                   onClick={() => setEditingGoal(false)}
                   disabled={updatingGoal}
                 >
@@ -390,7 +247,7 @@ export default function MemberDashboard() {
               </>
             )}
           </div>
-          <div className="text-xs text-gray-500">{Math.min((stats.totalGiven / stats.goal) * 100, 100).toFixed(0)}% of goal</div>
+          <div className="text-xs text-gray-500">{barWidth.toFixed(0)}% of goal</div>
         </div>
         <div className="mt-3 h-4 bg-yellow-100 rounded overflow-hidden shadow-inner">
           <div
@@ -412,7 +269,7 @@ export default function MemberDashboard() {
                 key={i}
                 className="bg-gradient-to-t from-purple-500 via-purple-300 to-purple-100 rounded-t-lg w-7 hover:scale-110 transition-transform"
                 style={{
-                  height: `${amt / Math.max(...stats.monthlyTrend, 1) * 80}px`,
+                  height: `${(amt / Math.max(...stats.monthlyTrend, 1) * 80)}px`,
                   minHeight: 6,
                 }}
                 title={`R${amt}`}

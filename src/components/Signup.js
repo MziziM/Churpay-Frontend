@@ -41,43 +41,108 @@ export default function Signup() {
   }, []);
 
   async function handleSubmit(e) {
-    e.preventDefault();
-    setMsg("");
-    try {
-      if (role === "church") {
-        const formData = new FormData();
-        formData.append("church_name", church_name);
-        formData.append("email", church_email);
-        formData.append("password", password);
-        formData.append("lead_pastor", lead_pastor);
-        formData.append("contact_person", contact_person);
-        formData.append("bank_name", bank_name);
-        formData.append("bank_account", bank_account);
-        formData.append("account_holder", account_holder);
-        formData.append("church_address", church_address);
-        if (bank_letter) formData.append("bank_letter", bank_letter);
-        if (cor14) formData.append("cor14", cor14);
-
-        await axios.post("/api/register", formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
-      } else {
-        await axios.post("/api/member/register", {
-          member_name,
-          email: member_email,
-          password: member_password,
-          church: selectedChurch, // send selected church
-        });
-      }
-      if (role === "member") {
-        navigate("/member/dashboard");
-      } else {
-        navigate("/church/dashboard");
-      }
-    } catch (err) {
-      setMsg(err.response?.data?.message || "Registration failed.");
+  e.preventDefault();
+  setMsg("");
+  try {
+    let res;
+    if (role === "member") {
+      res = await axios.post("/api/register", {
+        name: member_name,
+        email: member_email,
+        password: member_password,
+        role: "member",
+      });
+      // After registering, auto-login
+      const loginRes = await axios.post("/api/login", {
+        email: member_email,
+        password: member_password,
+      });
+      localStorage.setItem("churpay_token", loginRes.data.token);
+      localStorage.setItem("churpay_name", loginRes.data.name);
+      localStorage.setItem("churpay_role", "member");
+      // Redirect straight to dashboard!
+      navigate("/memberdashboard");
+    } else {
+      // church registration & login...
+      res = await axios.post("/api/register", {
+        name: church_name,
+        email: church_email,
+        password,
+        role: "church",
+      });
+      const loginRes = await axios.post("/api/login", {
+        email: church_email,
+        password,
+      });
+      localStorage.setItem("churpay_token", loginRes.data.token);
+      localStorage.setItem("churpay_name", loginRes.data.name);
+      localStorage.setItem("churpay_role", "church");
+      navigate("/church_dashboard");
     }
+  } catch (err) {
+    setMsg(err.response?.data?.error || "Registration failed.");
   }
+}
+
+  async function handleSubmit(e) {
+  e.preventDefault();
+  setMsg("");
+  try {
+    if (role === "church") {
+      const formData = new FormData();
+      formData.append("church_name", church_name);
+      formData.append("email", church_email);
+      formData.append("password", password);
+      formData.append("lead_pastor", lead_pastor);
+      formData.append("contact_person", contact_person);
+      formData.append("bank_name", bank_name);
+      formData.append("bank_account", bank_account);
+      formData.append("account_holder", account_holder);
+      formData.append("church_address", church_address);
+      if (bank_letter) formData.append("bank_letter", bank_letter);
+      if (cor14) formData.append("cor14", cor14);
+
+      // Register church
+      await axios.post("/api/register", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      // Auto-login church
+      const loginRes = await axios.post("/api/login", {
+        email: church_email,
+        password: password,
+      });
+      localStorage.setItem("churpay_token", loginRes.data.token);
+      localStorage.setItem("churpay_name", loginRes.data.name);
+      localStorage.setItem("churpay_role", "church");
+      navigate("/church_dashboard");
+    } else {
+      // Register member
+      await axios.post("/api/member/register", {
+        name: member_name,
+        email: member_email,
+        password: member_password,
+        // church: selectedChurch, // Include if you need
+      });
+
+      // Auto-login member
+      const loginRes = await axios.post("/api/login", {
+        email: member_email,
+        password: member_password,
+      });
+      localStorage.setItem("churpay_token", loginRes.data.token);
+      localStorage.setItem("churpay_name", loginRes.data.name);
+      localStorage.setItem("churpay_role", "member");
+      navigate("/memberdashboard");
+    }
+  } catch (err) {
+    setMsg(
+      err.response?.data?.message ||
+      err.response?.data?.error ||
+      "Registration failed."
+    );
+  }
+}
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-800 to-indigo-900 flex items-center justify-center px-4">

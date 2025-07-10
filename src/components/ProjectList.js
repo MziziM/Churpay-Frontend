@@ -6,14 +6,24 @@ export default function ProjectList() {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    axios.get("https://churpay-backend.onrender.com/api/projects")
-      .then(res => {
+ useEffect(() => {
+  axios.get("https://churpay-backend.onrender.com/api/projects")
+    .then(res => {
+      // Always set projects as an array
+      if (Array.isArray(res.data)) {
         setProjects(res.data);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, []);
+      } else if (res.data && Array.isArray(res.data.projects)) {
+        setProjects(res.data.projects);
+      } else {
+        setProjects([]);
+      }
+      setLoading(false);
+    })
+    .catch(() => {
+      setProjects([]);
+      setLoading(false);
+    });
+}, []);
 
   return (
     <div className="w-full max-w-3xl mx-auto px-2 sm:px-0 py-6 sm:py-10">

@@ -46,7 +46,9 @@ export default function MyPayouts({ token }) {
                 <td className="border px-2 py-1">{p.bank_name}</td>
                 <td className="border px-2 py-1">{p.account_number}</td>
                 <td className="border px-2 py-1">{p.status}</td>
-                <td className="border px-2 py-1">{(new Date(p.created_at)).toLocaleDateString()}</td>
+                <td className="border px-2 py-1">
+                  {p.created_at ? new Date(p.created_at).toLocaleDateString() : "—"}
+                </td>
               </tr>
             ))
           ) : (

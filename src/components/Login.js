@@ -23,7 +23,7 @@ export default function Login() {
       localStorage.setItem("churpay_user", JSON.stringify(res.data.user || {}));
 
       // Navigate based on role
-      const redirectPath = role === "church" ? "/dashboard" : "/member-dashboard";
+      const redirectPath = role === "church" ? "/dashboard" : "/memberdashboard";
       setTimeout(() => navigate(redirectPath), 1000);
     } catch (err) {
       setMsg(err.response?.data?.message || "Login failed.");

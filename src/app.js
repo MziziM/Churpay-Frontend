@@ -2,7 +2,6 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from "react-route
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import AdminAuthNavbar from "./components/AdminAuthNavbar";
-// Main pages
 import Home from "./components/Home";
 import Signup from "./components/Signup";
 import Login from "./components/Login";
@@ -17,14 +16,12 @@ import Project from "./components/Project";
 import ProjectList from "./components/ProjectList";
 import TransactionHistory from "./components/TransactionHistory";
 import DemoLogin from "./components/DemoLogin";
-// Admin tools
 import AllUsers from "./components/AllUsers";
 import PendingChurches from "./components/PendingChurches";
 import AdminAnalytics from "./components/AdminAnalytics";
 import AdminChurchManagement from "./components/AdminChurchManagement";
 import BulkMessage from "./components/BulkMessage";
 import ActivityLog from "./components/ActivityLog";
-// Profile & church management
 import Profile from "./components/Profile";
 import Settings from "./components/Settings";
 import ChurchLogoUpload from "./components/ChurchLogoUpload";
@@ -37,25 +34,22 @@ import AdminSignup from "./components/AdminSignup";
 
 function App() {
   const location = useLocation();
-  // List all admin-only routes (can use startsWith if more routes)
   const isAdminRoute = location.pathname.startsWith("/admin");
   const isAdminAuthPage = location.pathname === "/admin-login" || location.pathname === "/admin-signup";
 
   return (
     <div className="bg-white min-h-screen flex flex-col">
-      {/* Only show main navbar if NOT on an admin page */}
+      {/* Navbars */}
       {!isAdminRoute && <Navbar />}
-      {/* Only show admin navbar if on admin route */}
       {isAdminRoute && <AdminAuthNavbar />}
       <main className="flex-grow flex items-center justify-center px-2 sm:px-0">
         <Routes>
-          {/* Public Routes */}
+          {/* Public */}
           <Route path="/" element={<Home />} />
           <Route path="/features" element={<Features />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/about" element={<About />} />
           <Route path="/faq" element={<FAQ />} />
-          {/* Projects */}
           <Route path="/projects" element={<ProjectList />} />
           <Route path="/projects/:id" element={<Project />} />
           {/* Auth */}
@@ -65,9 +59,9 @@ function App() {
           <Route path="/admin-signup" element={<AdminSignup />} />
           {/* Dashboards */}
           <Route path="/memberdashboard" element={<MemberDashboard />} />
+          <Route path="/church_dashboard" element={<ChurchDashboard />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin_dashboard" element={<AdminDashboard />} />
-          <Route path="/church_dashboard" element={<ChurchDashboard />} />
           {/* Transactions */}
           <Route path="/transactions" element={<TransactionHistory />} />
           {/* Demo */}
@@ -79,7 +73,7 @@ function App() {
           <Route path="/admin-church-management" element={<AdminChurchManagement />} />
           <Route path="/bulk-message" element={<BulkMessage />} />
           <Route path="/activity-log" element={<ActivityLog />} />
-          {/* Profile, church, and settings */}
+          {/* Profile, church, settings */}
           <Route path="/profile" element={<Profile />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/upload-logo" element={<ChurchLogoUpload />} />
